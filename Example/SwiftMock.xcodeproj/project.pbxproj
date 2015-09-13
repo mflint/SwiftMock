@@ -7,13 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		34F9AF3F1BA5C16F003F5EB2 /* MockTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34F9AF3E1BA5C16F003F5EB2 /* MockTests.swift */; settings = {ASSET_TAGS = (); }; };
+		34F9AF461BA5C906003F5EB2 /* MockTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34F9AF451BA5C906003F5EB2 /* MockTests.swift */; settings = {ASSET_TAGS = (); }; };
 		607FACD61AFB9204008FA782 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 607FACD51AFB9204008FA782 /* AppDelegate.swift */; };
 		607FACD81AFB9204008FA782 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 607FACD71AFB9204008FA782 /* ViewController.swift */; };
 		607FACDB1AFB9204008FA782 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 607FACD91AFB9204008FA782 /* Main.storyboard */; };
 		607FACDD1AFB9204008FA782 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 607FACDC1AFB9204008FA782 /* Images.xcassets */; };
 		607FACE01AFB9204008FA782 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 607FACDE1AFB9204008FA782 /* LaunchScreen.xib */; };
-		607FACEC1AFB9204008FA782 /* Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 607FACEB1AFB9204008FA782 /* Tests.swift */; };
 		8F4D0B1F562AD535ABF50FCF /* Pods_SwiftMock_Tests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6FDCB638F8B904B0255439D2 /* Pods_SwiftMock_Tests.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
 		9CB52892EC466745ACAF4602 /* Pods_SwiftMock_Example.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7543952C088D443B5B37975B /* Pods_SwiftMock_Example.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
 /* End PBXBuildFile section */
@@ -31,7 +30,7 @@
 /* Begin PBXFileReference section */
 		1DD92A540CAC2392740F0344 /* Pods-SwiftMock_Tests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftMock_Tests.release.xcconfig"; path = "Pods/Target Support Files/Pods-SwiftMock_Tests/Pods-SwiftMock_Tests.release.xcconfig"; sourceTree = "<group>"; };
 		239FC558661049EAE5E01854 /* Pods-SwiftMock_Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftMock_Example.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SwiftMock_Example/Pods-SwiftMock_Example.debug.xcconfig"; sourceTree = "<group>"; };
-		34F9AF3E1BA5C16F003F5EB2 /* MockTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = MockTests.swift; path = ../../../SwiftMock__/Example/Tests/MockTests.swift; sourceTree = "<group>"; };
+		34F9AF451BA5C906003F5EB2 /* MockTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockTests.swift; sourceTree = "<group>"; };
 		4E2CFD11F2A97C3292F8D58D /* Pods-SwiftMock_Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftMock_Example.release.xcconfig"; path = "Pods/Target Support Files/Pods-SwiftMock_Example/Pods-SwiftMock_Example.release.xcconfig"; sourceTree = "<group>"; };
 		607FACD01AFB9204008FA782 /* SwiftMock_Example.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftMock_Example.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		607FACD41AFB9204008FA782 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -42,7 +41,6 @@
 		607FACDF1AFB9204008FA782 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LaunchScreen.xib; sourceTree = "<group>"; };
 		607FACE51AFB9204008FA782 /* SwiftMock_Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SwiftMock_Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		607FACEA1AFB9204008FA782 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		607FACEB1AFB9204008FA782 /* Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests.swift; sourceTree = "<group>"; };
 		6FDCB638F8B904B0255439D2 /* Pods_SwiftMock_Tests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SwiftMock_Tests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		7543952C088D443B5B37975B /* Pods_SwiftMock_Example.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SwiftMock_Example.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		869DDE5F45D5E7A932A9C5A6 /* Pods-SwiftMock_Tests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftMock_Tests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SwiftMock_Tests/Pods-SwiftMock_Tests.debug.xcconfig"; sourceTree = "<group>"; };
@@ -117,9 +115,8 @@
 		607FACE81AFB9204008FA782 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
-				607FACEB1AFB9204008FA782 /* Tests.swift */,
 				607FACE91AFB9204008FA782 /* Supporting Files */,
-				34F9AF3E1BA5C16F003F5EB2 /* MockTests.swift */,
+				34F9AF451BA5C906003F5EB2 /* MockTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -371,8 +368,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				607FACEC1AFB9204008FA782 /* Tests.swift in Sources */,
-				34F9AF3F1BA5C16F003F5EB2 /* MockTests.swift in Sources */,
+				34F9AF461BA5C906003F5EB2 /* MockTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -516,6 +512,7 @@
 			baseConfigurationReference = 869DDE5F45D5E7A932A9C5A6 /* Pods-SwiftMock_Tests.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_MODULES = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(SDKROOT)/Developer/Library/Frameworks",
 					"$(inherited)",
@@ -527,6 +524,7 @@
 				INFOPLIST_FILE = Tests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SwiftMock_Example.app/SwiftMock_Example";
 			};
 			name = Debug;
@@ -536,6 +534,7 @@
 			baseConfigurationReference = 1DD92A540CAC2392740F0344 /* Pods-SwiftMock_Tests.release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_MODULES = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(SDKROOT)/Developer/Library/Frameworks",
 					"$(inherited)",
