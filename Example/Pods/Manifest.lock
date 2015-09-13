@@ -1,0 +1,14 @@
+PODS:
+  - SwiftMock (0.1.0)
+
+DEPENDENCIES:
+  - SwiftMock (from `../`)
+
+EXTERNAL SOURCES:
+  SwiftMock:
+    :path: ../
+
+SPEC CHECKSUMS:
+  SwiftMock: 9988efce041f17a88f01dc0fc86834c8dccbe3c2
+
+COCOAPODS: 0.38.2

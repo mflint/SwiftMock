@@ -1,0 +1,6 @@
+framework module SwiftMock {
+  umbrella header "SwiftMock-umbrella.h"
+
+  export *
+  module * { export * }
+}
