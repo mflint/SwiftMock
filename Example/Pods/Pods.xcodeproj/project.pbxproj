@@ -12,6 +12,9 @@
 		34F9AF411BA5C5FB003F5EB2 /* MockExpectation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34F9AF401BA5C5FB003F5EB2 /* MockExpectation.swift */; settings = {ASSET_TAGS = (); }; };
 		34F9AF481BA5CD64003F5EB2 /* MockFailure.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34F9AF471BA5CD64003F5EB2 /* MockFailure.swift */; settings = {ASSET_TAGS = (); }; };
 		34F9AF4A1BA5E32C003F5EB2 /* MockCallHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34F9AF491BA5E32C003F5EB2 /* MockCallHandler.swift */; settings = {ASSET_TAGS = (); }; };
+		34F9AF501BA62066003F5EB2 /* MockCallHandlerImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34F9AF4F1BA62066003F5EB2 /* MockCallHandlerImpl.swift */; settings = {ASSET_TAGS = (); }; };
+		34F9AF521BA620B3003F5EB2 /* MockFailer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34F9AF511BA620B3003F5EB2 /* MockFailer.swift */; settings = {ASSET_TAGS = (); }; };
+		34F9AF541BA620BD003F5EB2 /* MockFailerImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34F9AF531BA620BD003F5EB2 /* MockFailerImpl.swift */; settings = {ASSET_TAGS = (); }; };
 		3F33DFF0CB0DE880F64A9C84860EA02B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4AC99A19DC598CAF87145B914770C100 /* Foundation.framework */; };
 		4421FBE4D1570E6AB56A3CC9C64B9B9C /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4AC99A19DC598CAF87145B914770C100 /* Foundation.framework */; };
 		5ABA0EE312EBFC9A5626DC6D327B692F /* Pods-SwiftMock_Tests-dummy.m in Sources */ = {isa = PBXBuildFile; fileRef = D612623F1D326711ABF9C3AEE1D15434 /* Pods-SwiftMock_Tests-dummy.m */; };
@@ -59,6 +62,9 @@
 		34F9AF401BA5C5FB003F5EB2 /* MockExpectation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockExpectation.swift; sourceTree = "<group>"; };
 		34F9AF471BA5CD64003F5EB2 /* MockFailure.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockFailure.swift; sourceTree = "<group>"; };
 		34F9AF491BA5E32C003F5EB2 /* MockCallHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockCallHandler.swift; sourceTree = "<group>"; };
+		34F9AF4F1BA62066003F5EB2 /* MockCallHandlerImpl.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockCallHandlerImpl.swift; sourceTree = "<group>"; };
+		34F9AF511BA620B3003F5EB2 /* MockFailer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockFailer.swift; sourceTree = "<group>"; };
+		34F9AF531BA620BD003F5EB2 /* MockFailerImpl.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockFailerImpl.swift; sourceTree = "<group>"; };
 		3AFE5FF5F7D88599C428568CC6B500D5 /* Pods_SwiftMock_Example.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SwiftMock_Example.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		40A2D67B061C852CE59E218705D2A2E7 /* SwiftMock.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftMock.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		4850F037834199727CDDC0D6825A4976 /* SwiftMock.modulemap */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = "sourcecode.module-map"; path = SwiftMock.modulemap; sourceTree = "<group>"; };
@@ -253,6 +259,9 @@
 				34F9AF401BA5C5FB003F5EB2 /* MockExpectation.swift */,
 				34F9AF471BA5CD64003F5EB2 /* MockFailure.swift */,
 				34F9AF491BA5E32C003F5EB2 /* MockCallHandler.swift */,
+				34F9AF4F1BA62066003F5EB2 /* MockCallHandlerImpl.swift */,
+				34F9AF511BA620B3003F5EB2 /* MockFailer.swift */,
+				34F9AF531BA620BD003F5EB2 /* MockFailerImpl.swift */,
 			);
 			path = Classes;
 			sourceTree = "<group>";
@@ -412,9 +421,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				B0E759E0845F4A86904DB25E096A8216 /* Mock.swift in Sources */,
+				34F9AF521BA620B3003F5EB2 /* MockFailer.swift in Sources */,
 				A1DE0DC4ED3E4C08B8342B93F1807E55 /* SwiftMock-dummy.m in Sources */,
+				34F9AF501BA62066003F5EB2 /* MockCallHandlerImpl.swift in Sources */,
 				34F9AF481BA5CD64003F5EB2 /* MockFailure.swift in Sources */,
 				34F9AF411BA5C5FB003F5EB2 /* MockExpectation.swift in Sources */,
+				34F9AF541BA620BD003F5EB2 /* MockFailerImpl.swift in Sources */,
 				34F9AF4A1BA5E32C003F5EB2 /* MockCallHandler.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

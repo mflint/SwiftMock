@@ -3,74 +3,125 @@
 //  SwiftMock
 //
 //  Created by Matthew Flint on 13/09/2015.
-//  Copyright © 2015 CocoaPods. All rights reserved.
 //
 
 import XCTest
 import SwiftMock
 
+class TestMockCallHandler: MockCallHandler {
+    var failer: MockFailer {
+        // just make it compile - this won't be called by the test
+        return (nil as MockFailer?)!
+    }
+    
+    var expectCalled = false
+    var stubCalled = false
+    var rejectCalled = false
+    var verifyCalled = false
+    
+    let mockExpectation: MockExpectation
+    let testCase: XCTestCase
+    
+    init(withMockExpectation expectation: MockExpectation, withTestCase theTestCase: XCTestCase) {
+        mockExpectation = expectation
+        testCase = theTestCase
+    }
+    
+    func expect() -> MockExpectation {
+        expectCalled = true
+        return mockExpectation
+    }
+    
+    func stub() -> MockExpectation {
+        stubCalled = true
+        return mockExpectation
+    }
+    
+    func reject() -> MockExpectation {
+        rejectCalled = true
+        return mockExpectation
+    }
+    
+    func verify() {
+        verifyCalled = true
+    }
+    
+    func accept(returnValue: Any?, functionName: String, args: Any?...) -> Any? {
+        return nil
+    }
+}
+
+class TestMockImplementation: Mock {
+    var callHandler: MockCallHandler
+    
+    init(withCallHandler handler: MockCallHandler) {
+        callHandler = handler
+    }
+}
+
 // ----
 
-protocol Target {
-    func voidFunc();
-}
-
-class MockTarget: Target, Mock {
-    let callHandler: MockCallHandler
-    
-    init(withFailer failer: MockFailer) {
-        callHandler = MockCallHandler(withFailer: failer)
-    }
-    
-    func voidFunc() {
-        
-    }
-}
-
-class TestFailer: MockFailer {
-    var message: String?
-    
-    func doFail(message: String) {
-        
-    }
-}
-
 class MockTests: XCTestCase {
-    func testExpectVoidCall_voidCallMade_verify() {
+    func testExpect() {
         // given
-        let failer = TestFailer()
-        let sut = MockTarget(withFailer: failer)
+        let mockExpectation = MockExpectation()
+        let handler = TestMockCallHandler(withMockExpectation: mockExpectation, withTestCase:self)
+        let sut = TestMockImplementation(withCallHandler: handler)
+        
+        XCTAssertFalse(handler.expectCalled)
         
         // when
-        sut.expect().call(sut.voidFunc())
-        sut.voidFunc()
-        sut.verify()
+        let result = sut.expect()
+        
+        // when
+        XCTAssertTrue(result === mockExpectation)
+        XCTAssertTrue(handler.expectCalled)
     }
     
-    func testExpectVoidCall_voidCallNotMade_verify() {
+    func testStub() {
         // given
-        let failer = TestFailer()
-        let sut = MockTarget(withFailer: failer)
-        XCTAssertNil(failer.message)
+        let mockExpectation = MockExpectation()
+        let handler = TestMockCallHandler(withMockExpectation: mockExpectation, withTestCase:self)
+        let sut = TestMockImplementation(withCallHandler: handler)
+        
+        XCTAssertFalse(handler.stubCalled)
         
         // when
-        sut.expect().call(sut.voidFunc())
-        sut.verify()
+        let result = sut.stub()
         
-        // then
-        XCTAssertEqual(failer.message, "'voidFunc' was not called")
+        // when
+        XCTAssertTrue(result === mockExpectation)
+        XCTAssertTrue(handler.stubCalled)
     }
     
-    func testDoNotExpectVoidCall_voidCallMade_failFast() {
+    func testReject() {
         // given
-        let failer = TestFailer()
-        let sut = MockTarget(withFailer: failer)
-        XCTAssertNil(failer.message)
+        let mockExpectation = MockExpectation()
+        let handler = TestMockCallHandler(withMockExpectation: mockExpectation, withTestCase:self)
+        let sut = TestMockImplementation(withCallHandler: handler)
+        
+        XCTAssertFalse(handler.rejectCalled)
         
         // when
-        sut.voidFunc()
+        let result = sut.reject()
         
-        // then
-        XCTAssertEqual(failer.message, "'voidFunc' unexpected call")
+        // when
+        XCTAssertTrue(result === mockExpectation)
+        XCTAssertTrue(handler.rejectCalled)
+    }
+    
+    func testVerify() {
+        // given
+        let mockExpectation = MockExpectation()
+        let handler = TestMockCallHandler(withMockExpectation: mockExpectation, withTestCase:self)
+        let sut = TestMockImplementation(withCallHandler: handler)
+        
+        XCTAssertFalse(handler.verifyCalled)
+        
+        // when
+        sut.verify()
+        
+        // when
+        XCTAssertTrue(handler.verifyCalled)
     }
 }

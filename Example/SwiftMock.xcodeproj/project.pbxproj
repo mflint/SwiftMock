@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		34F9AF461BA5C906003F5EB2 /* MockTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34F9AF451BA5C906003F5EB2 /* MockTests.swift */; settings = {ASSET_TAGS = (); }; };
+		34F9AF4E1BA6108B003F5EB2 /* MockCallHandlerImplTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34F9AF4D1BA6108B003F5EB2 /* MockCallHandlerImplTests.swift */; settings = {ASSET_TAGS = (); }; };
+		34FA70341BA76BA6002FCDA7 /* MockExpectationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34FA70331BA76BA6002FCDA7 /* MockExpectationTests.swift */; settings = {ASSET_TAGS = (); }; };
 		607FACD61AFB9204008FA782 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 607FACD51AFB9204008FA782 /* AppDelegate.swift */; };
 		607FACD81AFB9204008FA782 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 607FACD71AFB9204008FA782 /* ViewController.swift */; };
 		607FACDB1AFB9204008FA782 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 607FACD91AFB9204008FA782 /* Main.storyboard */; };
@@ -31,6 +33,8 @@
 		1DD92A540CAC2392740F0344 /* Pods-SwiftMock_Tests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftMock_Tests.release.xcconfig"; path = "Pods/Target Support Files/Pods-SwiftMock_Tests/Pods-SwiftMock_Tests.release.xcconfig"; sourceTree = "<group>"; };
 		239FC558661049EAE5E01854 /* Pods-SwiftMock_Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftMock_Example.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SwiftMock_Example/Pods-SwiftMock_Example.debug.xcconfig"; sourceTree = "<group>"; };
 		34F9AF451BA5C906003F5EB2 /* MockTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockTests.swift; sourceTree = "<group>"; };
+		34F9AF4D1BA6108B003F5EB2 /* MockCallHandlerImplTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockCallHandlerImplTests.swift; sourceTree = "<group>"; };
+		34FA70331BA76BA6002FCDA7 /* MockExpectationTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockExpectationTests.swift; sourceTree = "<group>"; };
 		4E2CFD11F2A97C3292F8D58D /* Pods-SwiftMock_Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftMock_Example.release.xcconfig"; path = "Pods/Target Support Files/Pods-SwiftMock_Example/Pods-SwiftMock_Example.release.xcconfig"; sourceTree = "<group>"; };
 		607FACD01AFB9204008FA782 /* SwiftMock_Example.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftMock_Example.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		607FACD41AFB9204008FA782 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -117,6 +121,7 @@
 			children = (
 				607FACE91AFB9204008FA782 /* Supporting Files */,
 				34F9AF451BA5C906003F5EB2 /* MockTests.swift */,
+				34F9AF4D1BA6108B003F5EB2 /* MockCallHandlerImplTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -125,6 +130,7 @@
 			isa = PBXGroup;
 			children = (
 				607FACEA1AFB9204008FA782 /* Info.plist */,
+				34FA70331BA76BA6002FCDA7 /* MockExpectationTests.swift */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -211,7 +217,7 @@
 			attributes = {
 				LastSwiftUpdateCheck = 0700;
 				LastUpgradeCheck = 0630;
-				ORGANIZATIONNAME = CocoaPods;
+				ORGANIZATIONNAME = "";
 				TargetAttributes = {
 					607FACCF1AFB9204008FA782 = {
 						CreatedOnToolsVersion = 6.3.1;
@@ -368,6 +374,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				34FA70341BA76BA6002FCDA7 /* MockExpectationTests.swift in Sources */,
+				34F9AF4E1BA6108B003F5EB2 /* MockCallHandlerImplTests.swift in Sources */,
 				34F9AF461BA5C906003F5EB2 /* MockTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

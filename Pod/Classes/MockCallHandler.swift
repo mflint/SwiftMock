@@ -6,28 +6,19 @@
 //
 //
 
+/*
+MockCallHandler is the thing who maintains the list of expectations, stubs and rejects
+*/
+
 import Foundation
 
-public protocol MockFailer {
-    func doFail(message: String)
-}
-
-class DefaultMockFailer: MockFailer {
-    func doFail(message: String) {
-        preconditionFailure(message)
-    }
-}
-
-public class MockCallHandler {
-    let failer: MockFailer
+public protocol MockCallHandler {
+    func expect() -> MockExpectation
+    func reject() -> MockExpectation
+    func stub() -> MockExpectation
     
-    init() {
-        failer = DefaultMockFailer()
-    }
+    func verify()
     
-    // test only
-    public init(withFailer theFailer: MockFailer) {
-        failer = theFailer
-    }
-    
+    /// handles an incoming `function` call with the given `args` arguments. `returnValue` is the value returned while expectations are being set, so will probably be unused
+    func accept(returnValue: Any?, functionName: String, args: Any?...) -> Any?
 }
