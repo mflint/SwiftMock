@@ -71,7 +71,11 @@ public class MockCallHandlerImpl: MockCallHandler {
         //        preconditionFailure("fail")
     }
     
-    public func accept(returnValue: Any?, functionName: String, args: AnyObject?...) -> Any? {
+    public func checkOptional<T>(block: (value: T?) -> Bool) -> T? {
+        return nil
+    }
+    
+    public func accept(returnValue: Any?, functionName: String, args: Any?...) -> Any? {
         var expectationRegistered = false
         
         if let currentExpectation = expectation {

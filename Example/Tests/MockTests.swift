@@ -18,6 +18,7 @@ class TestMockCallHandler: MockCallHandler {
     var stubCalled = false
     var rejectCalled = false
     var verifyCalled = false
+//    var checkOptionalCalled = false
     
     let mockExpectation: MockExpectation
     let testCase: XCTestCase
@@ -46,9 +47,17 @@ class TestMockCallHandler: MockCallHandler {
         verifyCalled = true
     }
     
+//    func checkOptional<T>(block: (value: T?) -> Bool) -> T? {
+//        checkOptionalCalled = true
+//        block(3)
+//        return nil
+//    }
+    
     func accept(returnValue: Any?, functionName: String, args: Any?...) -> Any? {
         return nil
     }
+    
+    
 }
 
 class TestMockImplementation: Mock {
@@ -124,4 +133,35 @@ class MockTests: XCTestCase {
         // when
         XCTAssertTrue(handler.verifyCalled)
     }
+    
+//    func testCheckOptional() {
+//        // given
+//        let mockExpectation = MockExpectation()
+//        let handler = TestMockCallHandler(withMockExpectation: mockExpectation, withTestCase:self)
+//        let sut = TestMockImplementation(withCallHandler: handler)
+//        
+//        var checkBlockCalled = false
+//        let checkBlock = { (value: Any?) -> Bool in
+//            checkBlockCalled = true
+//            return true
+//        }
+//        
+//        // when
+//        sut.expect()
+//        sut.checkOptional(checkBlock)
+//        
+//        // then
+//        XCTAssertTrue(handler.checkOptionalCalled)
+//        
+//        
+//        // given
+//        XCTAssertFalse(checkBlockCalled)
+//        
+//        // when
+//        let result = handler.checkOptionalBlock(3)
+//        
+//        // then
+//        XCTAssertTrue(result)
+//        XCTAssertTrue(checkBlockCalled)
+//    }
 }

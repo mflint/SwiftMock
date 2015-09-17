@@ -19,6 +19,9 @@ public protocol MockCallHandler {
     
     func verify()
     
+    /// check an optional value with a block
+//    func checkOptional<T>(block: (value: T?) -> Bool) -> T?
+    
     /// handles an incoming `function` call with the given `args` arguments. `returnValue` is the value returned while expectations are being set, so will probably be unused
     func accept(returnValue: Any?, functionName: String, args: Any?...) -> Any?
 }

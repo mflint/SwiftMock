@@ -18,6 +18,9 @@ public protocol Mock {
     func reject() -> MockExpectation
     
     func verify()
+    
+    /// check an optional value with a block
+//    func checkOptional<T>(block: (value: T?) -> Bool) -> T?
 }
 
 public extension Mock {
@@ -36,4 +39,8 @@ public extension Mock {
     func verify() {
         callHandler.verify()
     }
+    
+//    func checkString(block: (value: String) -> Bool) -> String {
+//        return nil
+//    }
 }
