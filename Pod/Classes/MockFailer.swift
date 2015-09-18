@@ -14,5 +14,5 @@ It only exists to help us test, because Swift tests cannot currently catch the v
 import Foundation
 
 public protocol MockFailer {
-    func doFail(message: String)
+    func doFail(message: String, file: String, line: UInt)
 }

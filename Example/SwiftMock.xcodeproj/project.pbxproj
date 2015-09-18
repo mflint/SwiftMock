@@ -10,6 +10,7 @@
 		34F9AF461BA5C906003F5EB2 /* MockTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34F9AF451BA5C906003F5EB2 /* MockTests.swift */; settings = {ASSET_TAGS = (); }; };
 		34F9AF4E1BA6108B003F5EB2 /* MockCallHandlerImplTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34F9AF4D1BA6108B003F5EB2 /* MockCallHandlerImplTests.swift */; settings = {ASSET_TAGS = (); }; };
 		34FA70341BA76BA6002FCDA7 /* MockExpectationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34FA70331BA76BA6002FCDA7 /* MockExpectationTests.swift */; settings = {ASSET_TAGS = (); }; };
+		34FA703A1BAACE07002FCDA7 /* ExampleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34FA70391BAACE07002FCDA7 /* ExampleTests.swift */; settings = {ASSET_TAGS = (); }; };
 		607FACD61AFB9204008FA782 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 607FACD51AFB9204008FA782 /* AppDelegate.swift */; };
 		607FACD81AFB9204008FA782 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 607FACD71AFB9204008FA782 /* ViewController.swift */; };
 		607FACDB1AFB9204008FA782 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 607FACD91AFB9204008FA782 /* Main.storyboard */; };
@@ -35,6 +36,7 @@
 		34F9AF451BA5C906003F5EB2 /* MockTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockTests.swift; sourceTree = "<group>"; };
 		34F9AF4D1BA6108B003F5EB2 /* MockCallHandlerImplTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockCallHandlerImplTests.swift; sourceTree = "<group>"; };
 		34FA70331BA76BA6002FCDA7 /* MockExpectationTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockExpectationTests.swift; sourceTree = "<group>"; };
+		34FA70391BAACE07002FCDA7 /* ExampleTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExampleTests.swift; sourceTree = "<group>"; };
 		4E2CFD11F2A97C3292F8D58D /* Pods-SwiftMock_Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftMock_Example.release.xcconfig"; path = "Pods/Target Support Files/Pods-SwiftMock_Example/Pods-SwiftMock_Example.release.xcconfig"; sourceTree = "<group>"; };
 		607FACD01AFB9204008FA782 /* SwiftMock_Example.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftMock_Example.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		607FACD41AFB9204008FA782 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -122,6 +124,7 @@
 				607FACE91AFB9204008FA782 /* Supporting Files */,
 				34F9AF451BA5C906003F5EB2 /* MockTests.swift */,
 				34F9AF4D1BA6108B003F5EB2 /* MockCallHandlerImplTests.swift */,
+				34FA70391BAACE07002FCDA7 /* ExampleTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -374,6 +377,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				34FA703A1BAACE07002FCDA7 /* ExampleTests.swift in Sources */,
 				34FA70341BA76BA6002FCDA7 /* MockExpectationTests.swift in Sources */,
 				34F9AF4E1BA6108B003F5EB2 /* MockCallHandlerImplTests.swift in Sources */,
 				34F9AF461BA5C906003F5EB2 /* MockTests.swift in Sources */,

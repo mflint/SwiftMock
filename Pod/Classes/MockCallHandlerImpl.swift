@@ -18,7 +18,7 @@ public class MockCallHandlerImpl: MockCallHandler {
     // this is the collection of expectations
     var expectations = [MockExpectation]()
     
-    init() {
+    public init() {
         failer = MockFailerImpl()
     }
     
@@ -26,10 +26,10 @@ public class MockCallHandlerImpl: MockCallHandler {
         failer = theFailer
     }
     
-    public func expect() -> MockExpectation {
+    public func expect(file: String, _ line: UInt) -> MockExpectation {
         let newExpectation = MockExpectation()
         
-        if expectationsComplete() {
+        if expectationsComplete(file, line) {
             // make new expectation, and store it
             expectation = newExpectation
             
@@ -41,13 +41,13 @@ public class MockCallHandlerImpl: MockCallHandler {
         return newExpectation
     }
     
-    func expectationsComplete() -> Bool {
+    func expectationsComplete(file: String, _ line: UInt) -> Bool {
         var expectationsComplete = true
         
         // check that any previous expectation is complete, before starting the next
         if let currentExpectation = expectation {
             if !currentExpectation.isComplete() {
-                failer.doFail("Previous expectation was started but not completed")
+                failer.doFail("Previous expectation was started but not completed", file: file, line: line)
                 expectationsComplete = false
             }
         }
@@ -63,10 +63,10 @@ public class MockCallHandlerImpl: MockCallHandler {
         return (nil as MockExpectation?)!
     }
     
-    public func verify() {
-        if expectationsComplete() && expectations.count > 0 {
+    public func verify(file: String, _ line: UInt) {
+        if expectationsComplete(file, line) && expectations.count > 0 {
             let functionName = expectations[0].functionName!
-            failer.doFail("Expected call to '\(functionName)' not received")
+            failer.doFail("Expected call to '\(functionName)' not received", file: file, line: line)
         }
         //        preconditionFailure("fail")
     }
@@ -75,7 +75,8 @@ public class MockCallHandlerImpl: MockCallHandler {
         return nil
     }
     
-    public func accept(returnValue: Any?, functionName: String, args: Any?...) -> Any? {
+    public func accept(expectationReturnValue: Any?, functionName: String, args: Any?...) -> Any? {
+        var returnValue = expectationReturnValue
         var expectationRegistered = false
         
         if let currentExpectation = expectation {
@@ -92,12 +93,16 @@ public class MockCallHandlerImpl: MockCallHandler {
                 }
             }
 
-            if matchedExpectationIndex != nil {
-                // it was expected, so remove it
+            if let index = matchedExpectationIndex {
+                // it was expected, so grab the return value...
+                let expectation = expectations[index]
+                returnValue = expectation.returnValue
+                
+                // ... and remove it
                 expectations.removeAtIndex(matchedExpectationIndex!)
             } else {
                 // whoopsie, unexpected
-                failer.doFail("Unexpected call to '\(functionName)' received")
+                failer.doFail("Unexpected call to '\(functionName)' received", file: "", line: 0)
             }
         }
         

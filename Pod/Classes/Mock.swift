@@ -13,19 +13,19 @@ This protocol, and its extension, acts as a proxy to the real workhorse, MockCal
 public protocol Mock {
     var callHandler: MockCallHandler { get }
     
-    func expect() -> MockExpectation
+    func expect(file: String, _ line: UInt) -> MockExpectation
     func stub() -> MockExpectation
     func reject() -> MockExpectation
     
-    func verify()
+    func verify(file: String, _ line: UInt)
     
     /// check an optional value with a block
 //    func checkOptional<T>(block: (value: T?) -> Bool) -> T?
 }
 
 public extension Mock {
-    func expect() -> MockExpectation {
-        return callHandler.expect()
+    func expect(file: String = __FILE__, _ line: UInt = __LINE__) -> MockExpectation {
+        return callHandler.expect(file, line)
     }
     
     func stub() -> MockExpectation {
@@ -36,8 +36,8 @@ public extension Mock {
         return callHandler.reject()
     }
 
-    func verify() {
-        callHandler.verify()
+    func verify(file: String = __FILE__, _ line: UInt = __LINE__) {
+        callHandler.verify(file, line)
     }
     
 //    func checkString(block: (value: String) -> Bool) -> String {
