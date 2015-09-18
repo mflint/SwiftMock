@@ -7,6 +7,8 @@
 
 *SwiftMock* is a first attempt at a mocking/stubbing framework for Swift. It's in the very earliest stage of development, but may be almost usable.
 
+I have *not* yet tested this Pod against a separate project.
+
 I'm posting it publicly to get some feedback on its API, as used in your tests.
 
 ## Usage
