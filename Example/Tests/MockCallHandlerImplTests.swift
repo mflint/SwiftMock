@@ -232,5 +232,6 @@ class MockCallHandlerImplTests: XCTestCase {
 //    func testReminders() {
 //        XCTFail("TODO: expectation without method call, then stub() - incomplete expectation")
 //        XCTFail("TODO: expectation without method call, then reject() - incomplete expectation")
+//        XCTFail("TODO: if multiple expectations are unsatisfied, report them all")
 //    }
 }

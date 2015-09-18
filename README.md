@@ -109,12 +109,18 @@ mockObject.verify().call(mockObject.function())
 
 ## Installation
 
+This isn't available through [CocoaPods](http://cocoapods.org) yet. To try it out, clone the repo, open ```SwiftMock.xcworkspace``` and run the tests.
+
+```ExampleTests.swift``` will hopefully be a good starting-point.
+
+<!---
 SwiftMock is available through [CocoaPods](http://cocoapods.org). To install
 it, simply add the following line to your Podfile:
 
 ```ruby
 pod "SwiftMock"
 ```
+-->
 
 ## Author
 
