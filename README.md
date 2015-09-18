@@ -1,9 +1,11 @@
 # SwiftMock
 
-[![CI Status](http://img.shields.io/travis/Matthew Flint/SwiftMock.svg?style=flat)](https://travis-ci.org/Matthew Flint/SwiftMock)
+<!---
+[![CI Status](http://img.shields.io/travis/mflint/SwiftMock.svg?style=flat)](https://travis-ci.org/mflint/SwiftMock)
 [![Version](https://img.shields.io/cocoapods/v/SwiftMock.svg?style=flat)](http://cocoapods.org/pods/SwiftMock)
 [![License](https://img.shields.io/cocoapods/l/SwiftMock.svg?style=flat)](http://cocoapods.org/pods/SwiftMock)
 [![Platform](https://img.shields.io/cocoapods/p/SwiftMock.svg?style=flat)](http://cocoapods.org/pods/SwiftMock)
+-->
 
 *SwiftMock* is a first attempt at a mocking/stubbing framework for Swift. It's in the very earliest stage of development, but may be almost usable.
 
@@ -63,14 +65,14 @@ mockObject.verify()
 
 ```
 // expect a call with any String parameter
-mockObject.expect().call(mockObject. anotherFunction(mockObject.anyString()))
+mockObject.expect().call(mockObject.anotherFunction(mockObject.anyString()))
 ...
 mockObject.verify()
 ```
 
 ```
 // expect a call with any String parameter, and capture it using a block
-mockObject.expect().call(mockObject. anotherFunction(mockObject.anyString())).andCapture{ (parameters: Dictionary) in
+mockObject.expect().call(mockObject.anotherFunction(mockObject.anyString())).andCapture{ (parameters: Dictionary) in
     // parameters dictionary contains the function parameters
 })
 ...
