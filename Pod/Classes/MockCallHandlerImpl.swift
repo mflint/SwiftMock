@@ -22,7 +22,7 @@ public class MockCallHandlerImpl: MockCallHandler {
         failer = MockFailerImpl()
     }
     
-    public init(withFailer theFailer: MockFailer) {
+    public init(_ theFailer: MockFailer) {
         failer = theFailer
     }
     

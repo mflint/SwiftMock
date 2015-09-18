@@ -63,7 +63,7 @@ class MockExampleCollaborator: ExampleCollaborator, Mock {
     
     init(testCase: XCTestCase) {
         let failer = ExampleTestFailer(testCase)
-        callHandler = MockCallHandlerImpl(withFailer: failer)
+        callHandler = MockCallHandlerImpl(failer)
     }
     
     override func voidFunction() {

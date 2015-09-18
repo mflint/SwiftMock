@@ -32,7 +32,7 @@ class MockCallHandlerImplTests: XCTestCase {
     
     override func setUp() {
         failer = TestFailer()
-        sut = MockCallHandlerImpl(withFailer: failer)
+        sut = MockCallHandlerImpl(failer)
     }
 
     func testExpectCall_callMade_verify() {

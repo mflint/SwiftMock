@@ -7,11 +7,13 @@
 [![Platform](https://img.shields.io/cocoapods/p/SwiftMock.svg?style=flat)](http://cocoapods.org/pods/SwiftMock)
 -->
 
-*SwiftMock* is a first attempt at a mocking/stubbing framework for Swift. It's in the very earliest stage of development, but may be almost usable.
+*SwiftMock* is a first attempt at a mocking/stubbing framework for Swift 2.0. It's in the very earliest stage of development, but may be almost usable.
 
 I have *not* yet tested this Pod against a separate project.
 
 I'm posting it publicly to get some feedback on its API, as used in your tests.
+
+**Note: This is a Swift 2.0 project, so requires Xcode 7.0 to build.**
 
 ## Usage
 
@@ -26,6 +28,8 @@ protocol Frood {
     func anotherFunction(value: String)
 }
 ```
+
+Unfortunately, there's some boiler-plate code needed to create mocks. See ```MockExampleCollaborator``` for an example. The mock simply forwards calls onto a ```MockCallHandler```.
 
 ### Currently-supported syntax
 
