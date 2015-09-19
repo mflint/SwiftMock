@@ -43,27 +43,13 @@ class Example {
 
 
 
-class ExampleTestFailer: MockFailer {
-    let testCase: XCTestCase
-    
-    init(_ theTestCase: XCTestCase) {
-        testCase = theTestCase
-    }
-    
-    func doFail(message: String, file: String, line: UInt) {
-        // TODO move this into MockFailerImpl
-        testCase.recordFailureWithDescription(message, inFile: file, atLine: line, expected: false)
-    }
-}
-
 /// the mock ExampleCollaborator
 /// this would exist in your test target
 class MockExampleCollaborator: ExampleCollaborator, Mock {
     let callHandler: MockCallHandler
     
     init(testCase: XCTestCase) {
-        let failer = ExampleTestFailer(testCase)
-        callHandler = MockCallHandlerImpl(failer)
+        callHandler = MockCallHandlerImpl(testCase)
     }
     
     override func voidFunction() {

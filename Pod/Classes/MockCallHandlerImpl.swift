@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import XCTest
 
 public class MockCallHandlerImpl: MockCallHandler {
     // failures are routed through this object
@@ -18,8 +19,8 @@ public class MockCallHandlerImpl: MockCallHandler {
     // this is the collection of expectations
     var expectations = [MockExpectation]()
     
-    public init() {
-        failer = MockFailerImpl()
+    public init(_ testCase: XCTestCase) {
+        failer = MockFailerImpl(testCase)
     }
     
     public init(_ theFailer: MockFailer) {

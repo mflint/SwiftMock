@@ -9,6 +9,6 @@ EXTERNAL SOURCES:
     :path: ../
 
 SPEC CHECKSUMS:
-  SwiftMock: 9988efce041f17a88f01dc0fc86834c8dccbe3c2
+  SwiftMock: e7dad9b6497278fbb1c85c46a46b372a7ee3a409
 
 COCOAPODS: 0.38.2
