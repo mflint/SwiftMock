@@ -90,7 +90,7 @@ mockObject.stub().call(mockObject.function()).andReturn("dent")
 
 ```
 // reject a call
-mockObject.reject().call(mockObject.function()).andReturn("dent")
+mockObject.reject().call(mockObject.function())
 ```
 
 Mocks are currently strict, but with nice mocks we could also support the newer "verify expectations after" mocking:
