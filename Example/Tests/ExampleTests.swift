@@ -8,59 +8,7 @@
 
 import XCTest
 import SwiftMock
-
-/// collaborator class - this one will be mocked
-/// this would exist in your application target
-class ExampleCollaborator {
-    func voidFunction() {
-        
-    }
-    
-    func function(int: Int, _ string: String) -> String {
-        return ""
-    }
-}
-
-/// the class we're testing
-/// this would exist in your application target
-class Example {
-    let collaborator: ExampleCollaborator
-    
-    init(_ theCollaborator: ExampleCollaborator) {
-        collaborator = theCollaborator
-    }
-    
-    func doSomething() {
-        // test will fail if this call isn't made
-        collaborator.voidFunction()
-    }
-    
-    func doSomethingWithParamters(int: Int, _ string: String) -> String {
-        // test will fail if this call isn't made
-        return collaborator.function(int, string)
-    }
-}
-
-
-
-/// the mock ExampleCollaborator
-/// this would exist in your test target
-class MockExampleCollaborator: ExampleCollaborator, Mock {
-    let callHandler: MockCallHandler
-    
-    init(testCase: XCTestCase) {
-        callHandler = MockCallHandlerImpl(testCase)
-    }
-    
-    override func voidFunction() {
-        callHandler.accept(nil, functionName: __FUNCTION__, args: nil)
-    }
-    
-    override func function(int: Int, _ string: String) -> String {
-        return callHandler.accept("", functionName: __FUNCTION__, args: int, string) as! String
-    }
-}
-
+@testable import SwiftMock_Example
 
 /// the tests
 class ExampleTests: XCTestCase {

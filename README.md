@@ -9,15 +9,13 @@
 
 *SwiftMock* is a first attempt at a mocking/stubbing framework for Swift 2.0. It's in the very earliest stage of development, but may be almost usable.
 
-I have *not* yet tested this Pod against a separate project.
-
 I'm posting it publicly to get some feedback on its API, as used in your tests.
 
 **Note: This is a Swift 2.0 project, so requires Xcode 7.0 to build.**
 
 ## Usage
 
-There's an example test file called ```ExampleTests.swift```. Look there for some tests that can be run. This tests a class ```Example``` against a mocked collaborator ```ExampleCollaborator```. All the classes reside in this single swift file.
+There's an example test file called ```ExampleTests.swift```. Look there for some tests that can be run. This tests a class ```Example``` against a mocked collaborator ```ExampleCollaborator```.
 
 The examples below assume we're mocking this protocol:
 
@@ -109,18 +107,14 @@ mockObject.verify().call(mockObject.function())
 
 ## Installation
 
-This isn't available through [CocoaPods](http://cocoapods.org) yet. To try it out, clone the repo, open ```SwiftMock.xcworkspace``` and run the tests.
-
-```ExampleTests.swift``` will hopefully be a good starting-point.
-
-<!---
 SwiftMock is available through [CocoaPods](http://cocoapods.org). To install
-it, simply add the following line to your Podfile:
+it, simply add the following line to your Podfile against your test target:
 
 ```ruby
 pod "SwiftMock"
 ```
--->
+
+```ExampleTests.swift``` should be a good starting-point.
 
 ## Author
 
