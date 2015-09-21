@@ -42,7 +42,7 @@ class MockCallHandlerImplTests: XCTestCase {
         XCTAssertNil(failer.line)
 
         // when
-        sut.expect("ignored", 1)
+        sut.expect("ignored", 1).call(42)
         let expectationReturnValue = sut.accept(42, functionName: "selector", args: "arg1", "arg2", 3)
         sut.accept(42, functionName: "selector", args: "arg1", "arg2", 3)
         
@@ -229,6 +229,36 @@ class MockCallHandlerImplTests: XCTestCase {
         XCTAssertNil(failer.line)
     }
     
+    func testAndReturnValue() {
+        // given
+        XCTAssertNil(failer.message)
+        XCTAssertNil(failer.file)
+        XCTAssertNil(failer.line)
+        
+        // when
+        // Note: this "0" is here to provide the return value type
+        // Note: the "42" is the value returned by the mock when the expectations are being set. The tests will certainly ignore it, but it's not optional.
+        sut.expect("ignored", 1).call(0).andReturnValue { () -> Int in
+            return 555
+        }
+        sut.accept(42, functionName: "selector", args: "string", 12)
+        
+        // then
+        XCTAssertNil(failer.message)
+        XCTAssertNil(failer.file)
+        XCTAssertNil(failer.line)
+        
+        // when
+        // Note: this "42" is only relevant at expectation-setting time, unused at runtime
+        let runtimeReturnValue = sut.accept(42, functionName: "selector", args: "string", 12) as! Int
+        
+        // then
+        XCTAssertEqual(runtimeReturnValue, 555)
+        XCTAssertNil(failer.message)
+        XCTAssertNil(failer.file)
+        XCTAssertNil(failer.line)
+    }
+    
     func testAndDo() {
         // given
         XCTAssertNil(failer.message)
@@ -269,6 +299,7 @@ class MockCallHandlerImplTests: XCTestCase {
 //        XCTFail("TODO: expectation without method call, then stub() - incomplete expectation")
 //        XCTFail("TODO: expectation without method call, then reject() - incomplete expectation")
 //        XCTFail("TODO: if multiple expectations are unsatisfied, report them all")
-//        XCTFail("TODO: check for two return values")
+//        XCTFail("TODO: check for more than one action that returns a value")
+//        XCTFail("TODO: check for no return-value actions")
 //    }
 }

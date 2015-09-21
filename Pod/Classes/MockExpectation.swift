@@ -13,17 +13,17 @@ public class MockExpectation {
     public var functionName: String?
     var args = [Any?]()
 
-    /// the return value for this expectation, if any
-    public var returnValue: Any?
-    
-    /// this is the list of MockAction to perform
-    var actions = [MockAction]()
+    /// the actionable object holds actions for this expectation, and can perform them
+    var actionPerformer: MockActionPerformer!
     
     public init() {
     }
     
-    public func call<T>(value: T) -> MockActionable<T> {
-        return MockActionable(value, self)
+    /// this call makes a MockActionable<T>, where T is the return value of the funciton being mocked. The returned object is resonsible for making and performing Actions when the expectation is satisfied. Every subsequent call to "andDo", "andReturn", etc is a separate Action.
+    public func call<T: Any>(value: T) -> MockActionable<T> {
+        let theActionable = MockActionable(value)
+        actionPerformer = theActionable
+        return theActionable
     }
     
     /// record the function name and arguments during the expectation-setting phase
@@ -46,11 +46,9 @@ public class MockExpectation {
         return functionName == theFunctionName && match(args, theArgs)
     }
     
-    /// perform actions
-    public func performActions() {
-        for action in actions {
-            action.performAction()
-        }
+    /// perform actions, and return a value from the mock
+    public func performActions() -> Any? {
+        return actionPerformer.performActions()
     }
     
     func match(firstAnyOptional: Any?, _ secondAnyOptional: Any?) -> Bool {
@@ -150,8 +148,4 @@ public class MockExpectation {
 		}
 		return result
 	}
-    
-    func addAction(action: MockAction) {
-        actions.append(action);
-    }
 }

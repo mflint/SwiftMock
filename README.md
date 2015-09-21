@@ -13,6 +13,12 @@ I'm posting it publicly to get some feedback on its API, as used in your tests.
 
 **Note: This is a Swift 2.0 project, so requires Xcode 7.0 to build.**
 
+## Limitations
+
+* Unfortunately, there's some boiler-plate code needed to create mocks. See ```MockExampleCollaborator``` for an example. The mock simply forwards calls onto a ```MockCallHandler```.
+* No support (yet) for stubbing, explicitly rejecting calls, or nice mocks
+* A finite set of argument types can be checked for equality in the matching code
+
 ## Usage
 
 There's an example test file called ```ExampleTests.swift```. Look there for some tests that can be run. This tests a class ```Example``` against a mocked collaborator ```ExampleCollaborator```.
@@ -26,8 +32,6 @@ protocol Frood {
     func anotherFunction(value: String)
 }
 ```
-
-Unfortunately, there's some boiler-plate code needed to create mocks. See ```MockExampleCollaborator``` for an example. The mock simply forwards calls onto a ```MockCallHandler```.
 
 ### Currently-supported syntax
 
@@ -44,8 +48,6 @@ mockObject.expect().call(mockObject.function()).andReturn("dent")
 ...
 mockObject.verify()
 ```
-
-### Future stuff
 
 ```
 // expect a call on a function which returns a String value, and also call a closure
@@ -64,6 +66,8 @@ mockObject.expect().call(mockObject.function()).andReturnValue({ () in
 ...
 mockObject.verify()
 ```
+
+### Future stuff
 
 ```
 // expect a call with any String parameter
@@ -104,6 +108,8 @@ mockObject.verify().call(mockObject.function())
 ... but I don't suppose we'd be able to feed return values back into the system. Hmm...
 
 ## Requirements
+
+XCTest, and probably dependency-injection of some kind.
 
 ## Installation
 

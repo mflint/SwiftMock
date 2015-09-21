@@ -69,7 +69,6 @@ public class MockCallHandlerImpl: MockCallHandler {
             let functionName = expectations[0].functionName!
             failer.doFail("Expected call to '\(functionName)' not received", file: file, line: line)
         }
-        //        preconditionFailure("fail")
     }
     
     public func checkOptional<T>(block: (value: T?) -> Bool) -> T? {
@@ -114,13 +113,6 @@ public class MockCallHandlerImpl: MockCallHandler {
         expectations.removeAtIndex(index)
         
         // perform any actions on that expectation
-        expectation.performActions()
-        
-        // and return the returnValue
-        return expectation.returnValue
-    }
-    
-    func addAction(action: MockAction) {
-        
+        return expectation.performActions()
     }
 }

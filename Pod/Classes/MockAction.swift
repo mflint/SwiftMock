@@ -8,14 +8,20 @@
 
 import Foundation
 
-public class MockAction {
-    let closure: () -> Void
+public class MockAction<T> {
+    let closure: () -> T
+    let returnsValue: Bool
     
-    init(_ theClosure: () -> Void) {
+    init(_ theClosure: () -> T, providesReturnValue: Bool = false) {
         closure = theClosure
+        returnsValue = providesReturnValue
     }
     
-    func performAction() /*-> Any?*/ {
-        closure()
+    func performAction() -> Any? {
+        return closure()
+    }
+    
+    func providesReturnValue() -> Bool {
+        return returnsValue
     }
 }

@@ -164,7 +164,7 @@ class MockExpectationTests: XCTestCase {
         let actionable1 = sut.call(13)
         let actionable2 = actionable1.andReturn(42)
         let satisfied = sut.satisfy(functionName: "func")
-        let returnedValue = sut.returnValue as! Int
+        let returnedValue = sut.performActions() as! Int
         
         // then
         XCTAssertNotNil(actionable1)
