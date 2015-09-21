@@ -50,4 +50,17 @@ class ExampleTests: XCTestCase {
         mockCollaborator.verify()
         XCTAssertEqual(result, "hoopy")
     }
+	
+	func testStringDict(){
+		// expect
+		mockCollaborator.expect().call(mockCollaborator.stringDictFunction(["Hello":"Pong"])).andReturn("ping")
+		
+		// when
+		let result = sut.doSomethingWithDictParameters(["Hello":"Pong"])
+		
+		// then
+		mockCollaborator.verify()
+		XCTAssertEqual(result, "ping")
+		
+	}
 }

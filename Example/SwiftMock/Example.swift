@@ -25,5 +25,9 @@ class Example {
         // test will fail if this call isn't made
         return collaborator.function(int, string)
     }
+	
+	func doSomethingWithDictParameters(dict: Dictionary<String, String>) -> String {
+		return collaborator.stringDictFunction(dict)
+	}
 }
 
