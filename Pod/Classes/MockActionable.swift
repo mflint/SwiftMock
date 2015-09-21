@@ -19,4 +19,10 @@ public class MockActionable<T> {
         expectation.returnValue = value
         return self
     }
+    
+    public func andDo(closure: () -> Void) -> MockActionable<T> {
+        let action = MockAction(closure)
+        expectation.addAction(action)
+        return self
+    }
 }

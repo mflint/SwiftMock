@@ -95,12 +95,8 @@ public class MockCallHandlerImpl: MockCallHandler {
             }
 
             if let index = matchedExpectationIndex {
-                // it was expected, so grab the return value...
-                let expectation = expectations[index]
-                returnValue = expectation.returnValue
-                
-                // ... and remove it
-                expectations.removeAtIndex(matchedExpectationIndex!)
+                // it was expected
+                returnValue = expectationMatched(index)
             } else {
                 // whoopsie, unexpected
                 failer.doFail("Unexpected call to '\(functionName)' received", file: "", line: 0)
@@ -108,5 +104,23 @@ public class MockCallHandlerImpl: MockCallHandler {
         }
         
         return returnValue
+    }
+    
+    func expectationMatched(index: Int) -> Any? {
+        // get the expectation
+        let expectation = expectations[index]
+        
+        // ... and remove it
+        expectations.removeAtIndex(index)
+        
+        // perform any actions on that expectation
+        expectation.performActions()
+        
+        // and return the returnValue
+        return expectation.returnValue
+    }
+    
+    func addAction(action: MockAction) {
+        
     }
 }

@@ -70,6 +70,20 @@ class ExampleTests: XCTestCase {
 		// then
 		mockCollaborator.verify()
 		XCTAssertEqual(result, "ping")
-		
 	}
+    
+    func testWithAndDoClosure() {
+        // given
+        
+        // expect
+        mockCollaborator.expect().call(mockCollaborator.voidFunction()).andDo { () in
+            // if the call is received, this closure will be executed
+            print("===== andDo closure called =====")
+        }
+        
+        // when
+        sut.doSomething()
+        
+        // then...
+    }
 }

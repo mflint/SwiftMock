@@ -201,7 +201,7 @@ class MockCallHandlerImplTests: XCTestCase {
         XCTAssertEqual(failer.line, 0)
     }
     
-    func testReturnValue() {
+    func testAndReturn() {
         // given
         XCTAssertNil(failer.message)
         XCTAssertNil(failer.file)
@@ -229,9 +229,46 @@ class MockCallHandlerImplTests: XCTestCase {
         XCTAssertNil(failer.line)
     }
     
+    func testAndDo() {
+        // given
+        XCTAssertNil(failer.message)
+        XCTAssertNil(failer.file)
+        XCTAssertNil(failer.line)
+        
+        var closure1Called = false
+        var closure2Called = false
+        
+        // when
+        // Note: this "0" is here to provide the return value type
+        sut.expect("ignored", 1).call().andDo({
+            closure1Called = true
+        }).andDo({
+            closure2Called = true
+        })
+        sut.accept(nil, functionName: "selector", args: nil)
+        
+        // then
+        XCTAssertNil(failer.message)
+        XCTAssertNil(failer.file)
+        XCTAssertNil(failer.line)
+        XCTAssertFalse(closure1Called)
+        XCTAssertFalse(closure2Called)
+        
+        // when
+        sut.accept(nil, functionName: "selector", args: nil)
+        
+        // then
+        XCTAssertNil(failer.message)
+        XCTAssertNil(failer.file)
+        XCTAssertNil(failer.line)
+        XCTAssertTrue(closure1Called)
+        XCTAssertTrue(closure2Called)
+    }
+    
 //    func testReminders() {
 //        XCTFail("TODO: expectation without method call, then stub() - incomplete expectation")
 //        XCTFail("TODO: expectation without method call, then reject() - incomplete expectation")
 //        XCTFail("TODO: if multiple expectations are unsatisfied, report them all")
+//        XCTFail("TODO: check for two return values")
 //    }
 }

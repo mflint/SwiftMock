@@ -9,14 +9,17 @@
 import Foundation
 
 public class MockExpectation {
+    /// calls will be matched against this functionName and arguments array
     public var functionName: String?
-    var args: [Any?]
+    var args = [Any?]()
 
     /// the return value for this expectation, if any
     public var returnValue: Any?
     
+    /// this is the list of MockAction to perform
+    var actions = [MockAction]()
+    
     public init() {
-        args = [Any?]()
     }
     
     public func call<T>(value: T) -> MockActionable<T> {
@@ -41,6 +44,13 @@ public class MockExpectation {
     /// offer this function, and its arguments, to the expectation to see if it matches
     public func satisfy(functionName theFunctionName: String, args theArgs: Any?...) -> Bool {
         return functionName == theFunctionName && match(args, theArgs)
+    }
+    
+    /// perform actions
+    public func performActions() {
+        for action in actions {
+            action.performAction()
+        }
     }
     
     func match(firstAnyOptional: Any?, _ secondAnyOptional: Any?) -> Bool {
@@ -140,4 +150,8 @@ public class MockExpectation {
 		}
 		return result
 	}
+    
+    func addAction(action: MockAction) {
+        actions.append(action);
+    }
 }
