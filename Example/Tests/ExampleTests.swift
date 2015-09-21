@@ -6,6 +6,15 @@
 //
 //
 
+
+
+/**
+
+Note: this test class is an example of how SwiftMock can be used, it is not the unit tests for the SwiftMock framework.
+
+**/
+
+
 import XCTest
 import SwiftMock
 @testable import SwiftMock_Example

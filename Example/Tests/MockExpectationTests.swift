@@ -103,6 +103,9 @@ class MockExpectationTests: XCTestCase {
         
         let array: [Any] = [2, "string"]
         doTestArgTypeMatches(array)
+        
+        let dict = [2: "two", "three": 3]
+        doTestArgTypeMatches(dict)
     }
     
     func testOptionalArgTypes() {

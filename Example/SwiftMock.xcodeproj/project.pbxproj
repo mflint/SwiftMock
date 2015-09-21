@@ -90,12 +90,13 @@
 			name = "Example classes";
 			sourceTree = "<group>";
 		};
-		348CFF0E1BAEABFD001B52D9 /* Example mocks */ = {
+		348CFF0E1BAEABFD001B52D9 /* Example tests */ = {
 			isa = PBXGroup;
 			children = (
+				34FA70391BAACE07002FCDA7 /* ExampleTests.swift */,
 				348CFF0F1BAEAC18001B52D9 /* MockExampleCollaborator.swift */,
 			);
-			name = "Example mocks";
+			name = "Example tests";
 			sourceTree = "<group>";
 		};
 		607FACC71AFB9204008FA782 = {
@@ -145,11 +146,11 @@
 		607FACE81AFB9204008FA782 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
-				348CFF0E1BAEABFD001B52D9 /* Example mocks */,
+				348CFF0E1BAEABFD001B52D9 /* Example tests */,
 				607FACE91AFB9204008FA782 /* Supporting Files */,
 				34F9AF451BA5C906003F5EB2 /* MockTests.swift */,
 				34F9AF4D1BA6108B003F5EB2 /* MockCallHandlerImplTests.swift */,
-				34FA70391BAACE07002FCDA7 /* ExampleTests.swift */,
+				34FA70331BA76BA6002FCDA7 /* MockExpectationTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -158,7 +159,6 @@
 			isa = PBXGroup;
 			children = (
 				607FACEA1AFB9204008FA782 /* Info.plist */,
-				34FA70331BA76BA6002FCDA7 /* MockExpectationTests.swift */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
