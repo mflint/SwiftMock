@@ -66,6 +66,10 @@ public class MockExpectation {
             if let secondArray = secondAny as? Array<Any> {
                 result = matchArrays(firstArray, secondArray)
             }
+		case let firstDictionary as NSDictionary:
+			if let secondDictionary = secondAny as? NSDictionary{
+				result = matchDictionaries(firstDictionary, secondDictionary)
+			}
         case let first as String:
             if let second = secondAny as? String {
                 result = first == second
@@ -113,4 +117,27 @@ public class MockExpectation {
         
         return result
     }
+	
+	func matchDictionaries(firstDictionary: NSDictionary,_ secondDictionary: NSDictionary) -> Bool{
+		var result = true
+		var firstKeys=Array<Any>()
+		var secondKeys=Array<Any>()
+		firstDictionary.keyEnumerator()
+		firstDictionary.keyEnumerator().forEach { (e) -> () in
+			firstKeys.append(e)
+		}
+		secondDictionary.keyEnumerator().forEach { (e) -> () in
+			secondKeys.append(e)
+		}
+		
+		if !matchArrays(firstKeys, secondKeys){
+			result=false
+		}
+		
+		for var index=0; index<firstKeys.count && result; index++ {
+			let key=firstKeys[index] as! NSCopying;
+			result = match(firstDictionary[key], secondDictionary[key])
+		}
+		return result
+	}
 }

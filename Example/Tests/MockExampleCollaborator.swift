@@ -27,4 +27,8 @@ class MockExampleCollaborator: ExampleCollaborator, Mock {
     override func function(int: Int, _ string: String) -> String {
         return callHandler.accept("", functionName: __FUNCTION__, args: int, string) as! String
     }
+	
+	override func stringDictFunction(dict: Dictionary<String, String>) -> String {
+		return callHandler.accept("", functionName: __FUNCTION__, args: dict) as! String
+	}
 }
