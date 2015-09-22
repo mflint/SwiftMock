@@ -33,7 +33,6 @@ extension MockMatcher: MockMatcherExtension {
 class MockMatcherTests: XCTestCase {
     
     func testArgTypes() {
-        doTestArgTypeMatches(<#T##arg: Any##Any#>)
         doTestArgTypeMatches(true)
         doTestArgTypeMatches("string")
         doTestArgTypeMatches(2)
