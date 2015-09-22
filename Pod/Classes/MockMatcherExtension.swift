@@ -8,6 +8,6 @@
 
 import Foundation
 
-protocol MockMatcherExtension {
-    func match(item1: Any?, _item2: Any?) -> Bool
+public protocol MockMatcherExtension {
+    func match(item1: Any?, _ item2: Any?) -> Bool
 }

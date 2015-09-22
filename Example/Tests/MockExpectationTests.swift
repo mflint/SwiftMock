@@ -95,55 +95,6 @@ class MockExpectationTests: XCTestCase {
         XCTAssertFalse(match)
     }
     
-    func testArgTypes() {
-        doTestArgTypeMatches(true)
-        doTestArgTypeMatches("string")
-        doTestArgTypeMatches(2)
-        doTestArgTypeMatches(2.0)
-        
-        let array: [Any] = [2, "string"]
-        doTestArgTypeMatches(array)
-        
-        let dict = [2: "two", "three": 3]
-        doTestArgTypeMatches(dict)
-    }
-    
-    func testOptionalArgTypes() {
-        doTestOptionalArgTypeMatches(nil)
-        doTestOptionalArgTypeMatches(true)
-        doTestOptionalArgTypeMatches(true)
-        doTestOptionalArgTypeMatches("string")
-        doTestOptionalArgTypeMatches(2)
-        doTestOptionalArgTypeMatches(2.0)
-        
-        let array: [Any] = [2, "string"]
-        doTestOptionalArgTypeMatches(array)
-    }
-    
-    func doTestArgTypeMatches(arg: Any) {
-        // given
-        let sut = MockExpectation()
-        
-        // when
-        sut.acceptExpected(functionName: "func", args:arg)
-        let match = sut.satisfy(functionName: "func", args:arg)
-        
-        // then
-        XCTAssertTrue(match, "\(arg)")
-    }
-    
-    func doTestOptionalArgTypeMatches(arg: Any?) {
-        // given
-        let sut = MockExpectation()
-        
-        // when
-        sut.acceptExpected(functionName: "func", args:arg)
-        let match = sut.satisfy(functionName: "func", args:arg)
-        
-        // then
-        XCTAssertTrue(match, "\(arg)")
-    }
-    
     func testCall() {
         // given
         let sut = MockExpectation()

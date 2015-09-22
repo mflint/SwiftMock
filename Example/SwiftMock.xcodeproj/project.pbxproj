@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		348507A01BB1B9C8008212C9 /* MockMatcherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3485079F1BB1B9C8008212C9 /* MockMatcherTests.swift */; settings = {ASSET_TAGS = (); }; };
 		348CFF0B1BAEA916001B52D9 /* Example.swift in Sources */ = {isa = PBXBuildFile; fileRef = 348CFF0A1BAEA916001B52D9 /* Example.swift */; settings = {ASSET_TAGS = (); }; };
 		348CFF0D1BAEA920001B52D9 /* ExampleCollaborator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 348CFF0C1BAEA920001B52D9 /* ExampleCollaborator.swift */; settings = {ASSET_TAGS = (); }; };
 		348CFF111BAEB001001B52D9 /* MockExampleCollaborator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 348CFF0F1BAEAC18001B52D9 /* MockExampleCollaborator.swift */; settings = {ASSET_TAGS = (); }; };
@@ -36,6 +37,7 @@
 /* Begin PBXFileReference section */
 		1DD92A540CAC2392740F0344 /* Pods-SwiftMock_Tests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftMock_Tests.release.xcconfig"; path = "Pods/Target Support Files/Pods-SwiftMock_Tests/Pods-SwiftMock_Tests.release.xcconfig"; sourceTree = "<group>"; };
 		239FC558661049EAE5E01854 /* Pods-SwiftMock_Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftMock_Example.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SwiftMock_Example/Pods-SwiftMock_Example.debug.xcconfig"; sourceTree = "<group>"; };
+		3485079F1BB1B9C8008212C9 /* MockMatcherTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockMatcherTests.swift; sourceTree = "<group>"; };
 		348CFF0A1BAEA916001B52D9 /* Example.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Example.swift; sourceTree = "<group>"; };
 		348CFF0C1BAEA920001B52D9 /* ExampleCollaborator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExampleCollaborator.swift; sourceTree = "<group>"; };
 		348CFF0F1BAEAC18001B52D9 /* MockExampleCollaborator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockExampleCollaborator.swift; sourceTree = "<group>"; };
@@ -151,6 +153,7 @@
 				34F9AF451BA5C906003F5EB2 /* MockTests.swift */,
 				34F9AF4D1BA6108B003F5EB2 /* MockCallHandlerImplTests.swift */,
 				34FA70331BA76BA6002FCDA7 /* MockExpectationTests.swift */,
+				3485079F1BB1B9C8008212C9 /* MockMatcherTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -408,6 +411,7 @@
 				34FA703A1BAACE07002FCDA7 /* ExampleTests.swift in Sources */,
 				34FA70341BA76BA6002FCDA7 /* MockExpectationTests.swift in Sources */,
 				34F9AF4E1BA6108B003F5EB2 /* MockCallHandlerImplTests.swift in Sources */,
+				348507A01BB1B9C8008212C9 /* MockMatcherTests.swift in Sources */,
 				34F9AF461BA5C906003F5EB2 /* MockTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

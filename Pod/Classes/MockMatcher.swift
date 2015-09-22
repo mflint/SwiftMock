@@ -8,7 +8,7 @@
 
 import Foundation
 
-class MockMatcher {
+public class MockMatcher {
     func match(firstAnyOptional: Any?, _ secondAnyOptional: Any?) -> Bool {
         if firstAnyOptional == nil && secondAnyOptional == nil {
             return true
@@ -52,7 +52,10 @@ class MockMatcher {
             if let second = secondAny as? Bool {
                 result = first == second
             }
-        default: break
+        default:
+            if let matcherExtension = self as? MockMatcherExtension {
+                result = matcherExtension.match(firstAny, secondAny)
+            }
         }
         
         return result
