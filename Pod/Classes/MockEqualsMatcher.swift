@@ -1,5 +1,5 @@
 //
-//  MockMatcher.swift
+//  MockEqualsMatcher.swift
 //  Pods
 //
 //  Created by Matthew Flint on 22/09/2015.
@@ -8,7 +8,7 @@
 
 import Foundation
 
-public class MockMatcher {
+public class MockEqualsMatcher {
     func match(firstAnyOptional: Any?, _ secondAnyOptional: Any?) -> Bool {
         if firstAnyOptional == nil && secondAnyOptional == nil {
             return true
@@ -53,7 +53,7 @@ public class MockMatcher {
                 result = first == second
             }
         default:
-            if let matcherExtension = self as? MockMatcherExtension {
+            if let matcherExtension = self as? MockEqualsMatcherExtension {
                 result = matcherExtension.match(firstAny, secondAny)
             }
         }

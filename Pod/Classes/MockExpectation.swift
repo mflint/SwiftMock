@@ -43,7 +43,7 @@ public class MockExpectation {
     
     /// offer this function, and its arguments, to the expectation to see if it matches
     public func satisfy(functionName theFunctionName: String, args theArgs: Any?...) -> Bool {
-        let matcher = MockMatcher()
+        let matcher = MockEqualsMatcher()
         return functionName == theFunctionName && matcher.match(args, theArgs)
     }
     

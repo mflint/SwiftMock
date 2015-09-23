@@ -1,5 +1,5 @@
 //
-//  MockMatcherTests.swift
+//  MockEqualsMatcherTests.swift
 //  SwiftMock
 //
 //  Created by Matthew Flint on 22/09/2015.
@@ -19,7 +19,7 @@ class AnotherDifferentClassForMatching {
     
 }
 
-extension MockMatcher: MockMatcherExtension {
+extension MockEqualsMatcher: MockEqualsMatcherExtension {
     public func match(item1: Any?, _ item2: Any?) -> Bool {
         switch item1 {
         case is DifferentClassForMatching:
@@ -30,7 +30,7 @@ extension MockMatcher: MockMatcherExtension {
     }
 }
 
-class MockMatcherTests: XCTestCase {
+class MockEqualsMatcherTests: XCTestCase {
     
     func testArgTypes() {
         doTestArgTypeMatches(true)
