@@ -24,7 +24,7 @@ There's an example test file called ```ExampleTests.swift```. Look there for som
 
 The examples below assume we're mocking this protocol:
 
-```
+```swift
 protocol Frood {
     func voidFunction(value: Int)
     func function() -> String
@@ -34,21 +34,21 @@ protocol Frood {
 
 In your test code, you'll need to create a ```MockFrood```, which extends ```Frood``` and adopts ```Mock```. The mock creates a ```MockCallHandler```, and forwards all calls to it:
 
-```
+```swift
 public class MockFrood: Frood, Mock {
     let callHandler: MockCallHandler
-    
+
     init(testCase: XCTestCase) {
         callHandler = MockCallHandlerImpl(testCase)
     }
-    
+
     override func voidFunction(int: Int) {
         // the first argument is the value returned by the mock
         // while setting expectations. In this case, we can use nil
         // as it returns Void
         callHandler.accept(nil, functionName: __FUNCTION__, args: int)
     }
-    
+
     override func function() -> String {
         // here, the return type is String, so the first argument
         // is a String. Any String will do.
@@ -72,7 +72,7 @@ Out of the box, *SwiftMock* can match the following types:
 
 Given that Swift doesn't have reflection, *SwiftMock* can't magically match your custom types, so you'd need to make an extension for ```MockMatcher``` which adopts ```MockMatcherExtension```:
 
-```
+```swift
 extension MockMatcher: MockMatcherExtension {
     public func match(item1: Any?, _ item2: Any?) -> Bool {
         switch item1 {
@@ -92,21 +92,21 @@ I'd probably put the mock objects and custom matcher code in a separate group in
 
 ### Currently-supported syntax
 
-```
+```swift
 // expect a call on a void function
 mockObject.expect().call(mockObject.voidFunction(42))
 ...
 mockObject.verify()
 ```
 
-```
+```swift
 // expect a call on a function which returns a String value
 mockObject.expect().call(mockObject.function()).andReturn("dent")
 ...
 mockObject.verify()
 ```
 
-```
+```swift
 // expect a call on a function which returns a String value, and also call a closure
 mockObject.expect().call(mockObject.function()).andReturn("dent").andDo({
     print("frood")
@@ -115,7 +115,7 @@ mockObject.expect().call(mockObject.function()).andReturn("dent").andDo({
 mockObject.verify()
 ```
 
-```
+```swift
 // expect a call on a function, use a closure to return a String value
 mockObject.expect().call(mockObject.function()).andReturnValue({ () in
     return "dent"
@@ -126,14 +126,14 @@ mockObject.verify()
 
 ### Future stuff
 
-```
+```swift
 // expect a call with any String parameter
 mockObject.expect().call(mockObject.anotherFunction(mockObject.anyString()))
 ...
 mockObject.verify()
 ```
 
-```
+```swift
 // expect a call with any String parameter, and capture it using a block
 mockObject.expect().call(mockObject.anotherFunction(mockObject.anyString())).andCapture{ (parameters: Dictionary) in
     // parameters dictionary contains the function parameters
@@ -142,19 +142,19 @@ mockObject.expect().call(mockObject.anotherFunction(mockObject.anyString())).and
 mockObject.verify()
 ```
 
-```
+```swift
 // stub a call
 mockObject.stub().call(mockObject.function()).andReturn("dent")
 ```
 
-```
+```swift
 // reject a call
 mockObject.reject().call(mockObject.function())
 ```
 
 Mocks are currently strict, but with nice mocks we could also support the newer "verify expectations after mocking" style:
 
-```
+```swift
 // prod the system under test
 systemUnderTest.prod()
 
