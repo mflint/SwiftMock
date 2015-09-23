@@ -71,10 +71,6 @@ public class MockCallHandlerImpl: MockCallHandler {
         }
     }
     
-    public func checkOptional<T>(block: (value: T?) -> Bool) -> T? {
-        return nil
-    }
-    
     public func accept(expectationReturnValue: Any?, functionName: String, args: Any?...) -> Any? {
         var returnValue = expectationReturnValue
         var expectationRegistered = false

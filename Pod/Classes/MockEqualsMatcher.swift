@@ -8,7 +8,15 @@
 
 import Foundation
 
-public class MockEqualsMatcher {
+public class MockEqualsMatcher: MockMatcher {
+    init(_ expected: Any?) {
+        super.init { (actual: Any?) -> Bool in
+            return MockEqualsMatcherImpl().match(expected, actual)
+        }
+    }
+}
+
+public class MockEqualsMatcherImpl {
     func match(firstAnyOptional: Any?, _ secondAnyOptional: Any?) -> Bool {
         if firstAnyOptional == nil && secondAnyOptional == nil {
             return true

@@ -11,7 +11,7 @@ import Foundation
 public class MockExpectation {
     /// calls will be matched against this functionName and arguments array
     public var functionName: String?
-    var args = [Any?]()
+    var expectedArgs = [Any?]()
 
     /// the actionable object holds actions for this expectation, and can perform them
     var actionPerformer: MockActionPerformer!
@@ -32,7 +32,7 @@ public class MockExpectation {
         let result = functionName == nil
         if result {
             functionName = theFunctionName
-            args = theArgs
+            expectedArgs = theArgs
         }
         return result
     }
@@ -42,14 +42,31 @@ public class MockExpectation {
     }
     
     /// offer this function, and its arguments, to the expectation to see if it matches
-    public func satisfy(functionName theFunctionName: String, args theArgs: Any?...) -> Bool {
-        let matcher = MockEqualsMatcher()
-        return functionName == theFunctionName && matcher.match(args, theArgs)
+    public func satisfy(functionName theFunctionName: String, args: Any?...) -> Bool {
+        if functionName != theFunctionName {
+            return false
+        }
+        
+        if args.count != expectedArgs.count {
+            return false
+        }
+        
+        for index in 0..<args.count {
+            let equalsMatcher = MockEqualsMatcher(expectedArgs[index])
+            if !equalsMatcher.match(args[index]) {
+                return false
+            }
+        }
+        
+        return true
     }
     
     /// perform actions, and return a value from the mock
     public func performActions() -> Any? {
-        return actionPerformer.performActions()
+        if let performer = actionPerformer {
+            return performer.performActions()
+        }
+        
+        return nil
     }
-    
 }

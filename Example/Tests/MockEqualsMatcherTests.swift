@@ -19,7 +19,7 @@ class AnotherDifferentClassForMatching {
     
 }
 
-extension MockEqualsMatcher: MockEqualsMatcherExtension {
+extension MockEqualsMatcherImpl: MockEqualsMatcherExtension {
     public func match(item1: Any?, _ item2: Any?) -> Bool {
         switch item1 {
         case is DifferentClassForMatching:
