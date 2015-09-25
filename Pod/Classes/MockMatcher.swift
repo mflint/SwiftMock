@@ -49,7 +49,7 @@ public class MockMatcher {
         var result = true
         var firstKeys=Array<Any>()
         var secondKeys=Array<Any>()
-        firstDictionary.keyEnumerator()
+
         firstDictionary.keyEnumerator().forEach { (e) -> () in
             firstKeys.append(e)
         }
