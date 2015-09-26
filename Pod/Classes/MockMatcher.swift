@@ -10,55 +10,13 @@ import Foundation
 
 public class MockMatcher {
     func match(firstAnyOptional: Any?, _ secondAnyOptional: Any?) -> Bool {
-        if firstAnyOptional == nil && secondAnyOptional == nil {
-            return true
+        
+        switch (firstAnyOptional, secondAnyOptional) {
+        case (nil, nil): return true
+        case (nil, _): return false
+        case (_, nil): return false
+        default: return patternMatchAnys(firstAnyOptional!, secondAnyOptional!)
         }
-        
-        if firstAnyOptional == nil || secondAnyOptional == nil {
-            return false
-        }
-        
-        let firstAny = firstAnyOptional!
-        let secondAny = secondAnyOptional!
-        
-        // there must be a better way to match two Any? values :-/
-        var result = false
-        switch(firstAny) {
-        case let firstArray as Array<Any?>:
-            if let secondArray = secondAny as? Array<Any?> {
-                result = matchArraysOfOptionals(firstArray, secondArray)
-            }
-        case let firstArray as Array<Any>:
-            if let secondArray = secondAny as? Array<Any> {
-                result = matchArrays(firstArray, secondArray)
-            }
-        case let firstDictionary as NSDictionary:
-            if let secondDictionary = secondAny as? NSDictionary{
-                result = matchDictionaries(firstDictionary, secondDictionary)
-            }
-        case let first as String:
-            if let second = secondAny as? String {
-                result = first == second
-            }
-        case let first as Int:
-            if let second = secondAny as? Int {
-                result = first == second
-            }
-        case let first as Double:
-            if let second = secondAny as? Double {
-                result = first == second
-            }
-        case let first as Bool:
-            if let second = secondAny as? Bool {
-                result = first == second
-            }
-        default:
-            if let matcherExtension = self as? MockMatcherExtension {
-                result = matcherExtension.match(firstAny, secondAny)
-            }
-        }
-        
-        return result
     }
     
     func matchArraysOfOptionals(firstArray: Array<Any?>, _ secondArray: Array<Any?>) -> Bool {
@@ -91,7 +49,7 @@ public class MockMatcher {
         var result = true
         var firstKeys=Array<Any>()
         var secondKeys=Array<Any>()
-        firstDictionary.keyEnumerator()
+
         firstDictionary.keyEnumerator().forEach { (e) -> () in
             firstKeys.append(e)
         }
@@ -107,6 +65,33 @@ public class MockMatcher {
             let key=firstKeys[index] as! NSCopying;
             result = match(firstDictionary[key], secondDictionary[key])
         }
+        return result
+    }
+    
+    private func patternMatchAnys(lhs: Any, _ rhs: Any) -> Bool {
+        var result = false
+        
+        switch (lhs, rhs) {
+        case let (lhs as Array<Any?>, rhs as Array<Any?>):
+            result = matchArraysOfOptionals(lhs, rhs)
+        case let (lhs as Array<Any>, rhs as Array<Any>):
+            result = matchArrays(lhs, rhs)
+        case let (lhs as NSDictionary, rhs as NSDictionary):
+            result = matchDictionaries(lhs, rhs)
+        case let (lhs as String, rhs as String):
+            result = lhs == rhs
+        case let (lhs as Int, rhs as Int):
+            result = lhs == rhs
+        case let (lhs as Double, rhs as Double):
+            result = lhs == rhs
+        case let (lhs as Bool, rhs as Bool):
+            result = lhs == rhs
+        default:
+            if let matcherExtension = self as? MockMatcherExtension {
+                result = matcherExtension.match(lhs, rhs)
+            }
+        }
+        
         return result
     }
 }
