@@ -18,58 +18,56 @@ public class MockEqualsMatcher: MockMatcher {
 
 public class MockEqualsMatcherImpl {
     func match(firstAnyOptional: Any?, _ secondAnyOptional: Any?) -> Bool {
-        if firstAnyOptional == nil && secondAnyOptional == nil {
-            return true
+        
+        switch (firstAnyOptional, secondAnyOptional) {
+        case (nil, nil): return true
+        case (nil, _): return false
+        case (_, nil): return false
+        default: return patternMatchAnys(firstAnyOptional!, secondAnyOptional!)
+        }
+    }
+    
+    private func matchArraysOfOptionals(firstArray: Array<Any?>, _ secondArray: Array<Any?>) -> Bool {
+        var result = true
+        if firstArray.count != secondArray.count {
+            result = false
         }
         
-        if firstAnyOptional == nil || secondAnyOptional == nil {
-            return false
+        for var index=0; index<firstArray.count && result; index++ {
+            result = match(firstArray[index], secondArray[index])
         }
         
-        let firstAny = firstAnyOptional!
-        let secondAny = secondAnyOptional!
-        
-        // there must be a better way to match two Any? values :-/
+        return result
+    }
+    
+    private func patternMatchAnys(lhs: Any, _ rhs: Any) -> Bool {
         var result = false
-        switch(firstAny) {
-        case let firstArray as Array<Any?>:
-            if let secondArray = secondAny as? Array<Any?> {
-                result = matchArraysOfOptionals(firstArray, secondArray)
-            }
-        case let firstArray as Array<Any>:
-            if let secondArray = secondAny as? Array<Any> {
-                result = matchArrays(firstArray, secondArray)
-            }
-        case let firstDictionary as NSDictionary:
-            if let secondDictionary = secondAny as? NSDictionary{
-                result = matchDictionaries(firstDictionary, secondDictionary)
-            }
-        case let first as String:
-            if let second = secondAny as? String {
-                result = first == second
-            }
-        case let first as Int:
-            if let second = secondAny as? Int {
-                result = first == second
-            }
-        case let first as Double:
-            if let second = secondAny as? Double {
-                result = first == second
-            }
-        case let first as Bool:
-            if let second = secondAny as? Bool {
-                result = first == second
-            }
+        
+        switch (lhs, rhs) {
+        case let (lhs as Array<Any?>, rhs as Array<Any?>):
+            result = matchArraysOfOptionals(lhs, rhs)
+        case let (lhs as Array<Any>, rhs as Array<Any>):
+            result = matchArrays(lhs, rhs)
+        case let (lhs as NSDictionary, rhs as NSDictionary):
+            result = matchDictionaries(lhs, rhs)
+        case let (lhs as String, rhs as String):
+            result = lhs == rhs
+        case let (lhs as Int, rhs as Int):
+            result = lhs == rhs
+        case let (lhs as Double, rhs as Double):
+            result = lhs == rhs
+        case let (lhs as Bool, rhs as Bool):
+            result = lhs == rhs
         default:
             if let matcherExtension = self as? MockEqualsMatcherExtension {
-                result = matcherExtension.match(firstAny, secondAny)
+                result = matcherExtension.match(lhs, rhs)
             }
         }
         
         return result
     }
-    
-    func matchArraysOfOptionals(firstArray: Array<Any?>, _ secondArray: Array<Any?>) -> Bool {
+
+    private func matchArrays(firstArray: Array<Any>, _ secondArray: Array<Any>) -> Bool {
         var result = true
         if firstArray.count != secondArray.count {
             result = false
@@ -82,24 +80,11 @@ public class MockEqualsMatcherImpl {
         return result
     }
     
-    func matchArrays(firstArray: Array<Any>, _ secondArray: Array<Any>) -> Bool {
-        var result = true
-        if firstArray.count != secondArray.count {
-            result = false
-        }
-        
-        for var index=0; index<firstArray.count && result; index++ {
-            result = match(firstArray[index], secondArray[index])
-        }
-        
-        return result
-    }
-    
-    func matchDictionaries(firstDictionary: NSDictionary,_ secondDictionary: NSDictionary) -> Bool{
+    private func matchDictionaries(firstDictionary: NSDictionary,_ secondDictionary: NSDictionary) -> Bool{
         var result = true
         var firstKeys=Array<Any>()
         var secondKeys=Array<Any>()
-        firstDictionary.keyEnumerator()
+        
         firstDictionary.keyEnumerator().forEach { (e) -> () in
             firstKeys.append(e)
         }

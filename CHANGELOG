@@ -1,3 +1,6 @@
+0.0.4   Much nicer matching code in MockEqualsMatcher, from Denis Lebedev. Thank-you Denis
+        Now storing MockMatcher objects against matcher keys, to facilitate more kinds of MockMatcher
+
 0.0.3   andDo(<closure>)
         andReturnValue(<closure>)
         Extendable MockMatcher for matching custom types

@@ -19,6 +19,9 @@ public class MockCallHandlerImpl: MockCallHandler {
     // this is the collection of expectations
     var expectations = [MockExpectation]()
     
+    // map of matchers which might be used
+    var matchers = MockMatcherMap()
+    
     public init(_ testCase: XCTestCase) {
         failer = MockFailerImpl(testCase)
     }
@@ -77,14 +80,14 @@ public class MockCallHandlerImpl: MockCallHandler {
         
         if let currentExpectation = expectation {
             // there's an expectation in progress - is it waiting for the function details?
-            expectationRegistered = currentExpectation.acceptExpected(functionName:functionName, args: args)
+            expectationRegistered = currentExpectation.acceptExpected(functionName:functionName, matcherKeys: args)
         }
         
         if !expectationRegistered {
             // OK, this wasn't a call to set up function expectations, so it's a real call
             var matchedExpectationIndex: Int?
             for var index=0; index<expectations.count && matchedExpectationIndex == nil; index++ {
-                if expectations[index].satisfy(functionName:functionName, args: args) {
+                if expectations[index].satisfy(matchers, functionName:functionName, args: args) {
                     matchedExpectationIndex = index
                 }
             }

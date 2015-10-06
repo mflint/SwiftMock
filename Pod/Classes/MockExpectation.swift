@@ -10,8 +10,8 @@ import Foundation
 
 public class MockExpectation {
     /// calls will be matched against this functionName and arguments array
-    public var functionName: String?
-    var expectedArgs = [Any?]()
+    var functionName: String?
+    var matcherKeys = [Any]()
 
     /// the actionable object holds actions for this expectation, and can perform them
     var actionPerformer: MockActionPerformer!
@@ -27,33 +27,41 @@ public class MockExpectation {
     }
     
     /// record the function name and arguments during the expectation-setting phase
-    public func acceptExpected(functionName theFunctionName: String, args theArgs: Any?...) -> Bool {
+    func acceptExpected(functionName theFunctionName: String, matcherKeys theMatcherKeys: Any...) -> Bool {
         // do we already have a function? if so, we can't accept this call as an expectation
         let result = functionName == nil
         if result {
             functionName = theFunctionName
-            expectedArgs = theArgs
+            matcherKeys = theMatcherKeys
         }
         return result
     }
     
-    public func isComplete() -> Bool {
+    func isComplete() -> Bool {
         return functionName != nil
     }
     
     /// offer this function, and its arguments, to the expectation to see if it matches
-    public func satisfy(functionName theFunctionName: String, args: Any?...) -> Bool {
+    func satisfy(matchers: MockMatcherMap, functionName theFunctionName: String, args: Any?...) -> Bool {
         if functionName != theFunctionName {
             return false
         }
         
-        if args.count != expectedArgs.count {
+        if args.count != matcherKeys.count {
             return false
         }
         
         for index in 0..<args.count {
-            let equalsMatcher = MockEqualsMatcher(expectedArgs[index])
-            if !equalsMatcher.match(args[index]) {
+            // this is either the key to finding a predefined matcher,
+            // or it's a literal expected value
+            let matcherKeyOrLiteral = matcherKeys[index]
+            
+            // so either get the predefined matcher, if one exists, or
+            // create a new MockEqualsMatcher for that literal
+            let matcher = matchers.getMatcher(matcherKeyOrLiteral) ?? MockEqualsMatcher(matcherKeyOrLiteral)
+            
+            // and now check the matcher against the actual arg value
+            if !matcher.match(args[index]) {
                 return false
             }
         }
@@ -62,7 +70,7 @@ public class MockExpectation {
     }
     
     /// perform actions, and return a value from the mock
-    public func performActions() -> Any? {
+    func performActions() -> Any? {
         if let performer = actionPerformer {
             return performer.performActions()
         }

@@ -7,7 +7,7 @@
 //
 
 import XCTest
-import SwiftMock
+@testable import SwiftMock
 
 // this one will match OK
 class DifferentClassForMatching {
@@ -48,7 +48,6 @@ class MockEqualsMatcherTests: XCTestCase {
     func testOptionalArgTypes() {
         doTestOptionalArgTypeMatches(nil)
         doTestOptionalArgTypeMatches(true)
-        doTestOptionalArgTypeMatches(true)
         doTestOptionalArgTypeMatches("string")
         doTestOptionalArgTypeMatches(2)
         doTestOptionalArgTypeMatches(2.0)
@@ -59,11 +58,10 @@ class MockEqualsMatcherTests: XCTestCase {
     
     func doTestArgTypeMatches(arg: Any) {
         // given
-        let sut = MockExpectation()
+        let sut = MockEqualsMatcher(arg)
         
         // when
-        sut.acceptExpected(functionName: "func", args:arg)
-        let match = sut.satisfy(functionName: "func", args:arg)
+        let match = sut.match(arg)
         
         // then
         XCTAssertTrue(match, "\(arg)")
@@ -71,11 +69,10 @@ class MockEqualsMatcherTests: XCTestCase {
     
     func doTestOptionalArgTypeMatches(arg: Any?) {
         // given
-        let sut = MockExpectation()
+        let sut = MockEqualsMatcher(arg)
         
         // when
-        sut.acceptExpected(functionName: "func", args:arg)
-        let match = sut.satisfy(functionName: "func", args:arg)
+        let match = sut.match(arg)
         
         // then
         XCTAssertTrue(match, "\(arg)")
@@ -83,27 +80,25 @@ class MockEqualsMatcherTests: XCTestCase {
 
     func testMatcherExtension_match() {
         // given
-        let sut = MockExpectation()
         let classWillMatch = DifferentClassForMatching()
+        let sut = MockEqualsMatcher(classWillMatch)
         
         // when
-        sut.acceptExpected(functionName: "func1", args:classWillMatch)
-        let match1 = sut.satisfy(functionName: "func1", args:classWillMatch)
+        let match = sut.match(classWillMatch)
         
         // then
-        XCTAssertTrue(match1)
+        XCTAssertTrue(match)
     }
     
     func testMatcherExtension_noMatch() {
         // given
-        let sut = MockExpectation()
         let classWillNotMatch = AnotherDifferentClassForMatching()
+        let sut = MockEqualsMatcher(classWillNotMatch)
         
         // when
-        sut.acceptExpected(functionName: "func2", args:classWillNotMatch)
-        let match2 = sut.satisfy(functionName: "func2", args:classWillNotMatch)
+        let match = sut.match(classWillNotMatch)
         
         // then
-        XCTAssertFalse(match2)
+        XCTAssertFalse(match)
     }
 }
