@@ -24,7 +24,7 @@ public protocol Mock {
 }
 
 public extension Mock {
-    func expect(file: String = __FILE__, _ line: UInt = __LINE__) -> MockExpectation {
+    func expect(file: String = #file, _ line: UInt = #line) -> MockExpectation {
         return callHandler.expect(file, line)
     }
     
@@ -36,7 +36,7 @@ public extension Mock {
         return callHandler.reject()
     }
 
-    func verify(file: String = __FILE__, _ line: UInt = __LINE__) {
+    func verify(file: String = #file, _ line: UInt = #line) {
         callHandler.verify(file, line)
     }
     
