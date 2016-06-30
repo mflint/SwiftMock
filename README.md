@@ -46,17 +46,17 @@ public class MockFrood: Frood, Mock {
         // the first argument is the value returned by the mock
         // while setting expectations. In this case, we can use nil
         // as it returns Void
-        callHandler.accept(nil, functionName: __FUNCTION__, args: int)
+        callHandler.accept(nil, functionName: #function, args: int)
     }
 
     override func function() -> String {
         // here, the return type is String, so the first argument
         // is a String. Any String will do.
-        return callHandler.accept("", functionName: __FUNCTION__, args: nil) as! String
+        return callHandler.accept("", functionName: #function, args: nil) as! String
     }
 
     override func anotherFunction(value: String) {
-        callHandler.accept(nil, functionName: __FUNCTION__, args: value)
+        callHandler.accept(nil, functionName: #function, args: value)
     }
 }
 ```
