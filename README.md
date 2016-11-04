@@ -1,15 +1,18 @@
 # SwiftMock
 
+[![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)
 [![CI Status](http://img.shields.io/travis/mflint/SwiftMock.svg?style=flat)](https://travis-ci.org/mflint/SwiftMock)
 [![Version](https://img.shields.io/cocoapods/v/SwiftMock.svg?style=flat)](http://cocoapods.org/pods/SwiftMock)
 [![License](https://img.shields.io/cocoapods/l/SwiftMock.svg?style=flat)](http://cocoapods.org/pods/SwiftMock)
 [![Platform](https://img.shields.io/cocoapods/p/SwiftMock.svg?style=flat)](http://cocoapods.org/pods/SwiftMock)
 
+**Note: Given the protocol-oriented way of working with Swift, I don't see any future for traditional mocking frameworks for Swift. Just write fakes!**
+
 *SwiftMock* is a first attempt at a mocking/stubbing framework for Swift 2.0. It's at an early stage of development, but may be usable.
 
 I'm posting it publicly to get some feedback on its API, as used in your tests.
 
-**Note: This is a Swift 2.0 project, so requires Xcode 7.0 to build.**
+This is a Swift 2.0 project, so requires Xcode 7.0 to build.
 
 ## Limitations
 
