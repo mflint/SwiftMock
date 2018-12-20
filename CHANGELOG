@@ -1,3 +1,7 @@
+1.0.0   large update:
+        removes most of the code, all of the matcher code
+        update for Swift 4
+
 0.0.3   andDo(<closure>)
         andReturnValue(<closure>)
         Extendable MockMatcher for matching custom types

@@ -8,8 +8,8 @@
 
 Pod::Spec.new do |s|
   s.name             = "SwiftMock"
-  s.version          = "0.0.3"
-  s.summary          = "A mocking framework for Swift 2.0"
+  s.version          = "1.0.0"
+  s.summary          = "A mocking framework for Swift 4.2"
 
 # This description is used to generate tags and improve search results.
 #   * Think: What does it do? Why did you write it? What is the focus?
@@ -17,7 +17,7 @@ Pod::Spec.new do |s|
 #   * Write the description between the DESC delimiters below.
 #   * Finally, don't worry about the indent, CocoaPods strips it!  
   s.description      = <<-DESC
-  SwiftMock is a first attempt at a mocking/stubbing framework for Swift 2.0. It's in the very earliest stage of development, but may be almost usable.
+  SwiftMock is a mockingframework for Swift 4.2.
                        DESC
 
   s.homepage         = "https://github.com/mflint/SwiftMock"
@@ -27,7 +27,7 @@ Pod::Spec.new do |s|
   s.source           = { :git => "https://github.com/mflint/SwiftMock.git", :tag => s.version.to_s }
   # s.social_media_url = 'https://twitter.com/<TWITTER_USERNAME>'
 
-  s.platform     = :ios, '8.0'
+  s.platform     = :ios, '12.0'
   s.requires_arc = true
 
   s.source_files = 'Pod/Classes/**/*'
@@ -37,5 +37,4 @@ Pod::Spec.new do |s|
 
   # s.public_header_files = 'Pod/Classes/**/*.h'
   s.frameworks = 'XCTest'
-  # s.dependency 'AFNetworking', '~> 2.3'
 end

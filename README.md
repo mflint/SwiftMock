@@ -1,29 +1,30 @@
 # SwiftMock
 
-[![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)
 [![CI Status](http://img.shields.io/travis/mflint/SwiftMock.svg?style=flat)](https://travis-ci.org/mflint/SwiftMock)
 [![Version](https://img.shields.io/cocoapods/v/SwiftMock.svg?style=flat)](http://cocoapods.org/pods/SwiftMock)
 [![License](https://img.shields.io/cocoapods/l/SwiftMock.svg?style=flat)](http://cocoapods.org/pods/SwiftMock)
 [![Platform](https://img.shields.io/cocoapods/p/SwiftMock.svg?style=flat)](http://cocoapods.org/pods/SwiftMock)
 
-**Note: Given the protocol-oriented way of working with Swift, I don't see any future for traditional mocking frameworks for Swift. Just write fakes!**
+_SwiftMock_ is a mocking framework for Swift 4.2.
 
-*SwiftMock* is a first attempt at a mocking/stubbing framework for Swift 2.0. It's at an early stage of development, but may be usable.
+## Notes on the history of this repo
 
-I'm posting it publicly to get some feedback on its API, as used in your tests.
+* September 2015: first version of this framework
+* November 2016: Marked the project as "unmaintained", with a comment "just write fakes instead"
+* November 2018: Rewrote this for Swift 4.2, with much simpler code
 
-This is a Swift 2.0 project, so requires Xcode 7.0 to build.
+I spent a while using fakes (test-doubles which implement a prototol and simply set various `methodWasCalled` flags), but this doesn't scale well. It's easy to forget to make assertions, especially if a new function is added to a protocol long after the protocol's fake was written. I've since migrated a lot of code to using this new Mock, and it's _amazing_ how many defects I've found. Mocks FTW!
 
 ## Limitations
 
-* There's some boiler-plate code needed to create mocks. See ```MockExampleCollaborator``` for an example, and the *Usage* section below
-* No support (yet) for stubbing, explicitly rejecting calls, call counts or nice mocks
-* No support (yet) for "any value" matchers
-* Not all failure scenarios can report exactly where the failure occurred
+* Developers need to be aware of the difference between calls which should be mocked, and those which shouldn't (ie, simple stubs)
+  * if the function in the collabotor class _performs an operation_ (starting a network request, logging-out a user, starting a timer), then it's good for mocking
+  * if the function returns a value, which your system-under-test uses to make a decision, and that decision is asserted elsewhere in your test code, then that function is _not_ a suitable candidate for mocking
+* You may sometimes need to customise the arguments which are passed into the ```accept``` call
+* Not all test-failure scenarios can report exactly where the failure occurred
+* It's possible for calls to get confused if a mock has two functions with the same name and similar arguments - but that seems unlikely to me. (Example: ```object.function(42)``` and ```object.function("42")```)
 
 ## Usage
-
-There's an example test file called ```ExampleTests.swift```. Look there for some tests that can be run. This tests a class ```Example``` against a mocked collaborator ```ExampleCollaborator```.
 
 The examples below assume we're mocking this protocol:
 
@@ -31,159 +32,193 @@ The examples below assume we're mocking this protocol:
 protocol Frood {
     func voidFunction(value: Int)
     func function() -> String
-    func anotherFunction(value: String)
+    func performAction(value: String, completion: @escaping () -> Void)
 }
 ```
 
-In your test code, you'll need to create a ```MockFrood```, which extends ```Frood``` and adopts ```Mock```. The mock creates a ```MockCallHandler```, and forwards all calls to it:
+In your test target, you'll need to create a ```MockFrood```, which extends ```Mock``` with a specialised type ```Frood``` and also adopts ```Frood```.
 
 ```swift
-public class MockFrood: Frood, Mock {
-    let callHandler: MockCallHandler
-
-    init(testCase: XCTestCase) {
-        callHandler = MockCallHandlerImpl(testCase)
+public class MockFrood: Mock<Frood>, Frood {
+    func voidFunction(value: Int) {
+        accept(args: [value])
     }
 
-    override func voidFunction(int: Int) {
-        // the first argument is the value returned by the mock
-        // while setting expectations. In this case, we can use nil
-        // as it returns Void
-        callHandler.accept(nil, functionName: __FUNCTION__, args: int)
+    func function() -> String {
+        return accept() as! String
     }
 
-    override func function() -> String {
-        // here, the return type is String, so the first argument
-        // is a String. Any String will do.
-        return callHandler.accept("", functionName: __FUNCTION__, args: nil) as! String
-    }
-
-    override func anotherFunction(value: String) {
-        callHandler.accept(nil, functionName: __FUNCTION__, args: value)
+    func performAction(value: String, completion: @escaping () -> Void) {
+        accept(checkArgs: [value], actionArgs: [completion])
     }
 }
 ```
 
-Out of the box, *SwiftMock* can match the following types:
-
-* String / String?
-* Int / Int?
-* Double / Double?
-* Array / Array?
-* Dictionary / Dictionary?
-* *raise an issue if I'm missing any common types*
-
-Given that Swift doesn't have reflection, *SwiftMock* can't magically match your custom types, so you'd need to make an extension for ```MockMatcher``` which adopts ```MockMatcherExtension```:
+Then create the mock in your test class, using `MockThing.create()`. A test class would typically look something like this:
 
 ```swift
-extension MockMatcher: MockMatcherExtension {
-    public func match(item1: Any?, _ item2: Any?) -> Bool {
-        switch item1 {
-        case let first as MyCustomType:
-            if let second = item2 as? MyCustomType {
-                // custom matching code here //
-                return true
-            }
-        default:
-            return false
-        }
+class MyTests: XCTestCase {
+    private let mockFrood = MockFrood.create()
+    
+    private func verify(file: StaticString = #file,
+                        line: UInt = #line) {
+        mockFrood.verify(file: file, line: line)
     }
-}
+    
+    func test_something() {
+        // given
+        let thing = MyThing(frood: mockFrood)
+        
+        // expect
+        mockFrood.expect { f in f.voidFunction() }
+        
+        // when
+        thing.hoopy()
+        
+        // then
+        verify()
+    }
 ```
 
-I'd probably put the mock objects and custom matcher code in a separate group in the test part of my project.
+The original version of _SwiftMock_ had explicit matcher classes for various types; this newer version simply converts each argument to a `String`, and matches on those `String` arguments. You can often simply `accept` the arguments themseves, but sometimes you'll want to be more specific about what you pass into the `accept` function.
+
+I'd probably put the mock objects in a separate group in the test part of my project.
 
 ### Currently-supported syntax
 
+_SwiftMock_ syntax requires the expected call in a block; this might look weird at first, but means that we have a readable way of setting expectations, and we know the return value _before_ the expected function is called.
+
 ```swift
 // expect a call on a void function
-mockObject.expect().call(mockObject.voidFunction(42))
+mockObject.expect { o in o.voidFunction(42) }
 ...
 mockObject.verify()
 ```
 
 ```swift
 // expect a call on a function which returns a String value
-mockObject.expect().call(mockObject.function()).andReturn("dent")
+mockObject.expect { o in o.functionReturningString() }.returning("dent")
 ...
 mockObject.verify()
 ```
 
 ```swift
-// expect a call on a function which returns a String value, and also call a closure
-mockObject.expect().call(mockObject.function()).andReturn("dent").andDo({
-    print("frood")
-})
+// expect a call on a function which returns a String value, and also call a block
+mockObject.expect { o in
+        o.functionReturningString()
+    }.doing { actionArgs in
+        print("frood")
+    }.returning("dent")
 ...
 mockObject.verify()
 ```
 
-```swift
-// expect a call on a function, use a closure to return a String value
-mockObject.expect().call(mockObject.function()).andReturnValue({ () in
-    return "dent"
-})
-...
-mockObject.verify()
-```
+Mocks are strict. This means they will reject _any_ unexpected call.
 
-### Future stuff
+
+## Various ways to call the "accept" function when writing your Mock object
 
 ```swift
-// expect a call with any String parameter
-mockObject.expect().call(mockObject.anotherFunction(mockObject.anyString()))
-...
-mockObject.verify()
-```
+// simplest use-case - mocking a function which takes no arguments and
+// returns no value
 
-```swift
-// expect a call with any String parameter, and capture it using a block
-mockObject.expect().call(mockObject.anotherFunction(mockObject.anyString())).andCapture{ (parameters: Dictionary) in
-    // parameters dictionary contains the function parameters
-})
-...
-mockObject.verify()
+class Mock<Protocol>, Protocol {
+    func myFunc() {
+        accept()
+    }
+}
 ```
 
 ```swift
-// stub a call
-mockObject.stub().call(mockObject.function()).andReturn("dent")
+// mocking a function which returns a value
+// this uses a force-cast, but in test code I guess we can live with it
+
+class Mock<Protocol>, Protocol {
+    func myFunc() -> String {
+        return accept() as! String
+    }
+}
 ```
 
 ```swift
-// reject a call
-mockObject.reject().call(mockObject.function())
-```
+// mocking a function which takes some arguments which must match the
+// expected values. SwiftMock will convert each argument to a String
+// and match them all
 
-Mocks are currently strict, but with nice mocks we could also support the newer "verify expectations after mocking" style:
+class Mock<Protocol>, Protocol {
+    func myFunc(personName: String, yearOfBirth: Int) {
+        accept(args: [personName, yearOfBirth])
+    }
+}
+```
 
 ```swift
-// prod the system under test
-systemUnderTest.prod()
+// mocking a function which takes parameter with a custom type
 
-// then verify that a function was called
-mockObject.verify().call(mockObject.function())
+struct Employee {
+    let personID: UUID
+    let personName: String
+    let roles: [Role]
+}
+
+class Mock<Protocol>, Protocol {
+    func myFunc(employee: Employee) {
+        // calling accept(arg) here might not work well - so you can
+        // select the important (identifying) parts of the struct
+        accept(args: [employee.personID, employee.personName])
+    }
+}
 ```
 
-... but I don't suppose we'd be able to feed return values back into the system. Hmm...
+```swift
+// specifying the function name explicitly
+// SwiftMock's accept call has a func parameter with a default value of
+// #func. This works most of the time, but you may wish to override it
 
-## Requirements
+class Mock<Protocol>, Protocol {
+    func myFunc(value: Int) {
+        accept(func: "functionName", args: [value])
+    }
+}
+```
 
-* Xcode 7
-* XCTest
+```swift
+// arguments which are unknown - example: a completion block which should be captured
+
+// here, the "url" argument is known by the test (and we expect it to be correct),
+// but the "completion" block argument must be captured by the test. So "checkArgs"
+// are used to check the function was called with the expected parameters, while
+// "actionArgs" are ignored by the matching code, and passed into any "doing" block
+
+class Mock<Protocol>, Protocol {
+    func getWebContent(url: URL, completion: (Data) -> Void) -> RequestState {
+        return accept(checkArgs: [url], actionArgs:[completion]) as! RequestState
+    }
+}
+
+
+// usage in the test class
+
+var capturedCompletionBlock: ((Data) -> Void)?
+
+myMock.expect { m in
+        m.getWebContent(url: expectedURL, completion: { data in })
+    }.doing { actionArgs in
+        capturedCompletionBlock = actionArgs[0] as? (Data) -> Void
+    }.returning(.requesting)
+
+
+// then later, call that captured block to simulate an incoming response
+capturedCompletionBlock?(response)
+```
 
 ## Installation
 
-SwiftMock is available through [CocoaPods](http://cocoapods.org). To install
-it, simply add the following line to your Podfile against your test target:
-
-```ruby
-pod "SwiftMock"
-```
+The code is all in one file - so the easiest way to use _SwiftMock_ is to simply copy `Mock.swift` into your project.
 
 ## Feedback
 
-Issues and pull-requests most welcome - especially feedback on any Bad Swift you might find :-)
+Issues and pull-requests most welcome.
 
 ## Author
 
@@ -191,4 +226,4 @@ Matthew Flint, m@tthew.org
 
 ## License
 
-*SwiftMock* is available under the MIT license. See the LICENSE file for more info.
+_SwiftMock_ is available under the MIT license. See the LICENSE file for more info.
