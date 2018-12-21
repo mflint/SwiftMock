@@ -20,6 +20,7 @@ I spent a while using fakes (test-doubles which implement a prototol and simply 
 * Developers need to be aware of the difference between calls which should be mocked, and those which shouldn't (ie, simple stubs)
   * if the function in the collabotor class _performs an operation_ (starting a network request, logging-out a user, starting a timer), then it's good for mocking
   * if the function returns a value, which your system-under-test uses to make a decision, and that decision is asserted elsewhere in your test code, then that function is _not_ a suitable candidate for mocking
+* No built-in support for stubbing calls. (This is calls which return a given value, but their use isn't asserted by the mock object)
 * You may sometimes need to customise the arguments which are passed into the ```accept``` call
 * Not all test-failure scenarios can report exactly where the failure occurred
 * It's possible for calls to get confused if a mock has two functions with the same name and similar arguments - but that seems unlikely to me. (Example: ```object.function(42)``` and ```object.function("42")```)
@@ -36,7 +37,7 @@ protocol Frood {
 }
 ```
 
-In your test target, you'll need to create a ```MockFrood```, which extends ```Mock``` with a specialised type ```Frood``` and also adopts ```Frood```.
+In your test target you'll need to create a ```MockFrood``` which extends ```Mock``` with a generic type parameter ```Frood```. It must also adopt the ```Frood``` protocol.
 
 ```swift
 public class MockFrood: Mock<Frood>, Frood {
@@ -80,13 +81,17 @@ class MyTests: XCTestCase {
     }
 ```
 
+This gives you the following behaviour:
+* `verify()` will fail the test if `voidFunction()` wasn't called exactly once
+* the mock will fast-fail the test if any other (unexpected) function is called on the mock
+
 The original version of _SwiftMock_ had explicit matcher classes for various types; this newer version simply converts each argument to a `String`, and matches on those `String` arguments. You can often simply `accept` the arguments themseves, but sometimes you'll want to be more specific about what you pass into the `accept` function.
 
 I'd probably put the mock objects in a separate group in the test part of my project.
 
 ### Currently-supported syntax
 
-_SwiftMock_ syntax requires the expected call in a block; this might look weird at first, but means that we have a readable way of setting expectations, and we know the return value _before_ the expected function is called.
+_SwiftMock_ syntax requires the expected call in a block; this might look weird at first, but means that we have a readable way of setting expectations, and we know the return value _before_ the expectation is set.
 
 ```swift
 // expect a call on a void function
