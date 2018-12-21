@@ -1,9 +1,9 @@
 # SwiftMock
 
-[![CI Status](http://img.shields.io/travis/mflint/SwiftMock.svg?style=flat)](https://travis-ci.org/mflint/SwiftMock)
-[![Version](https://img.shields.io/cocoapods/v/SwiftMock.svg?style=flat)](http://cocoapods.org/pods/SwiftMock)
-[![License](https://img.shields.io/cocoapods/l/SwiftMock.svg?style=flat)](http://cocoapods.org/pods/SwiftMock)
-[![Platform](https://img.shields.io/cocoapods/p/SwiftMock.svg?style=flat)](http://cocoapods.org/pods/SwiftMock)
+![](https://img.shields.io/badge/maintained-yes-green.svg)
+![](https://img.shields.io/github/license/mflint/SwiftMock.svg)
+![](https://img.shields.io/badge/platform-ios%20|%20osx%20|%20watchos%20|%20tvos-green.svg)
+![](https://img.shields.io/badge/swift_version-4.2-green.svg)
 
 _SwiftMock_ is a mocking framework for Swift 4.2.
 
