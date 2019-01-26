@@ -15,6 +15,10 @@ _SwiftMock_ is a mocking framework for Swift 4.2.
 
 I spent a while using fakes (test-doubles which implement a prototol and simply set various `methodWasCalled` flags), but this doesn't scale well. It's easy to forget to make assertions, especially if a new function is added to a protocol long after the protocol's fake was written. I've since migrated a lot of code to using this new Mock, and it's _amazing_ how many defects I've found. Mocks FTW!
 
+## Versioning
+
+_SwiftMock_ versions track the major/minor version of Swift itself, so you can easily find a tag for a version of SwiftMock which works with your version of Swift.
+
 ## Limitations
 
 * Developers need to be aware of the difference between calls which should be mocked, and those which shouldn't (ie, simple stubs)
