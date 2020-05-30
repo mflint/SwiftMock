@@ -162,6 +162,8 @@ class Mock<M> {
                 XCTFail("Unsatisfied expectation: \(expectationDescription)", file: file, line: line)
             }
         }
+
+        expectationCreator.expectations.removeAll()
     }
 
     @discardableResult
@@ -171,13 +173,7 @@ class Mock<M> {
 
     @discardableResult
     internal func accept(func: String = #function, checkArgs: [Any?], actionArgs: [Any?]) -> Any? {
-        let callSummary = "\(`func`) " +
-            checkArgs.map { (arg) -> String in
-                if let arg = arg {
-                    return String(describing: arg)
-                }
-                return String(describing: arg)
-                }.joined(separator: ", ")
+        let callSummary = "\(`func`) " + summary(for: checkArgs)
 
         guard let expectationHandler = expectationHandler else {
             preconditionFailure()
@@ -185,5 +181,35 @@ class Mock<M> {
 
         return expectationHandler.accept(callSummary, actionArgs: actionArgs)
     }
+    
+    private func summary(for argument: Any) -> String {
+        switch argument {
+        case let string as String:
+            return string
+        case let array as [Any]:
+            var result = "["
+            for (index, item) in array.enumerated() {
+                result += summary(for: item)
+                if index < array.count {
+                    result += ","
+                }
+            }
+            result += "]"
+            return result
+        case let dict as [String: Any]:
+            var result = "["
+            for (index, key) in dict.keys.sorted().enumerated() {
+                if let value = dict[key] {
+                    result += "\(summary(for: key)):\(summary(for:value))"
+                }
+                if index < dict.count {
+                    result += ","
+                }
+            }
+            result += "]"
+            return result
+        default:
+            return String(describing: argument)
+        }
+    }
 }
-
