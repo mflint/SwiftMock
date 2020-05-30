@@ -3,15 +3,16 @@
 ![](https://img.shields.io/badge/maintained-yes-green.svg)
 ![](https://img.shields.io/github/license/mflint/SwiftMock.svg)
 ![](https://img.shields.io/badge/platform-ios%20|%20osx%20|%20watchos%20|%20tvos-green.svg)
-![](https://img.shields.io/badge/swift_version-4.2-green.svg)
+![](https://img.shields.io/badge/swift_version-5.2-green.svg)
 
-_SwiftMock_ is a mocking framework for Swift 4.2.
+_SwiftMock_ is a mocking framework for Swift 5.2.
 
 ## Notes on the history of this repo
 
 * September 2015: first version of this framework
 * November 2016: Marked the project as "unmaintained", with a comment "just write fakes instead"
 * November 2018: Rewrote this for Swift 4.2, with much simpler code
+* May 2020: Minor changes
 
 I spent a while using fakes (test-doubles which implement a prototol and simply set various `methodWasCalled` flags), but this doesn't scale well. It's easy to forget to make assertions, especially if a new function is added to a protocol long after the protocol's fake was written. I've since migrated a lot of code to using this new Mock, and it's _amazing_ how many defects I've found. Mocks FTW!
 
@@ -23,11 +24,21 @@ _SwiftMock_ versions track the major/minor version of Swift itself, so you can e
 
 * Developers need to be aware of the difference between calls which should be mocked, and those which shouldn't (ie, simple stubs)
   * if the function in the collabotor class _performs an operation_ (starting a network request, logging-out a user, starting a timer), then it's good for mocking
-  * if the function returns a value, which your system-under-test uses to make a decision, and that decision is asserted elsewhere in your test code, then that function is _not_ a suitable candidate for mocking
+  * if the function returns a value which your system-under-test uses to make a decision, and that decision is asserted elsewhere in your test code, _and_ the function doesn't have any side-effects, then that function is _not_ a suitable candidate for mocking
 * No built-in support for stubbing calls. (This is calls which return a given value, but their use isn't asserted by the mock object)
 * You may sometimes need to customise the arguments which are passed into the ```accept``` call
 * Not all test-failure scenarios can report exactly where the failure occurred
 * It's possible for calls to get confused if a mock has two functions with the same name and similar arguments - but that seems unlikely to me. (Example: ```object.function(42)``` and ```object.function("42")```)
+
+The decision whether to "mock or stub" depends on what the function does. As an example, these two functions have similar method signatures:
+
+* `func isButtonEnabled() -> Bool`
+* `func saveValuesToKeychain() -> Bool`
+
+Both have no arguments, and both return a Bool - but they are very different:
+
+* `isButtonEnabled()` returns a boolean based on some internal logic. Your system-under-test will probably take that boolean value and use it to do something else, like calling `self.button.setEnabled(enabled)` - so your test would probably assert the state of the button is correct, and there's no need to check that `isButtonEnabled()` is called. _We care that the outcome is correct, not how the system-under-test decided to do the correct thing._ This doesn't need to be mocked.
+* `saveValuesToKeychain()`  is a command; our system-under-test is asking the mocked collaborator to do some useful work. In this case, we _really do care_ that the function is called, so it should be mocked.
 
 ## Usage
 
@@ -36,7 +47,7 @@ The examples below assume we're mocking this protocol:
 ```swift
 protocol Frood {
     func voidFunction(value: Int)
-    func function() -> String
+    func functionReturningString() -> String
     func performAction(value: String, completion: @escaping () -> Void)
 }
 ```
@@ -44,12 +55,12 @@ protocol Frood {
 In your test target you'll need to create a ```MockFrood``` which extends ```Mock``` with a generic type parameter ```Frood```. It must also adopt the ```Frood``` protocol.
 
 ```swift
-public class MockFrood: Mock<Frood>, Frood {
+class MockFrood: Mock<Frood>, Frood {
     func voidFunction(value: Int) {
         accept(args: [value])
     }
 
-    func function() -> String {
+    func functionReturningString() -> String {
         return accept() as! String
     }
 
@@ -59,7 +70,7 @@ public class MockFrood: Mock<Frood>, Frood {
 }
 ```
 
-Then create the mock in your test class, using `MockThing.create()`. A test class would typically look something like this:
+Then create the mock in your test class, using `MockFrood.create()`. A test class would typically look something like this:
 
 ```swift
 class MyTests: XCTestCase {
@@ -75,7 +86,7 @@ class MyTests: XCTestCase {
         let thing = MyThing(frood: mockFrood)
         
         // expect
-        mockFrood.expect { f in f.voidFunction() }
+        mockFrood.expect { f in f.voidFunction(value: 42) }
         
         // when
         thing.hoopy()
@@ -86,7 +97,8 @@ class MyTests: XCTestCase {
 ```
 
 This gives you the following behaviour:
-* `verify()` will fail the test if `voidFunction()` wasn't called exactly once
+
+* `verify()` will fail the test if `voidFunction()` wasn't called exactly once with the value `42`
 * the mock will fast-fail the test if any other (unexpected) function is called on the mock
 
 The original version of _SwiftMock_ had explicit matcher classes for various types; this newer version simply converts each argument to a `String`, and matches on those `String` arguments. You can often simply `accept` the arguments themseves, but sometimes you'll want to be more specific about what you pass into the `accept` function.
@@ -122,7 +134,7 @@ mockObject.expect { o in
 mockObject.verify()
 ```
 
-Mocks are strict. This means they will reject _any_ unexpected call.
+Mocks are strict. This means they will reject _any_ unexpected call. If this annoys you, then perhaps you should be stubbing those calls instead of mocking?
 
 
 ## Various ways to call the "accept" function when writing your Mock object

@@ -1,12 +1,20 @@
-4.2.0   large update:
-        removes most of the code, all of the matcher code
-        update for Swift 4.2
+5.2.0
+	improvements to call summary description
+	bump version to match Swift 5.2
 
-0.0.3   andDo(<closure>)
-        andReturnValue(<closure>)
-        Extendable MockMatcher for matching custom types
+4.2.0
+	large update:
+	removes most of the code, all of the matcher code
+	update for Swift 4.2
 
-0.0.2   Added Dictionary matching - thank-you Jaume
+0.0.3
+	andDo(<closure>)
+	andReturnValue(<closure>)
+	Extendable MockMatcher for matching custom types
 
-0.0.1   First cocoapods release
+0.0.2
+	Added Dictionary matching - thank-you Jaume
+
+0.0.1
+	First cocoapods release
 
