@@ -118,7 +118,8 @@ mockObject.verify()
 
 ```swift
 // expect a call on a function which returns a String value
-mockObject.expect { o in o.functionReturningString() }.returning("dent")
+// this uses the $0 _shorthand argument name_, if you prefer that style
+mockObject.expect { $0.functionReturningString() }.returning("dent")
 ...
 mockObject.verify()
 ```
@@ -184,8 +185,9 @@ struct Employee {
 
 class Mock<Protocol>, Protocol {
     func myFunc(employee: Employee) {
-        // calling accept(arg) here might not work well - so you can
-        // select the important (identifying) parts of the struct
+        // calling `accept(args: [employee])` here will not work well - so
+        // you should pass the important (identifying) parts of the struct
+		// instead
         accept(args: [employee.personID, employee.personName])
     }
 }
@@ -199,6 +201,40 @@ class Mock<Protocol>, Protocol {
 class Mock<Protocol>, Protocol {
     func myFunc(value: Int) {
         accept(func: "functionName", args: [value])
+    }
+}
+```
+
+```swift
+// you can set expectations that a property is set by using `didSet`
+// in your Mock object
+
+protocol ProtocolWithProperty: AnyObject {
+    var value: Int { get set }
+}
+
+class MockObject: Mock<ProtocolWithProperty>, ProtocolWithProperty {
+    var value: Int = 0 {
+        didSet {
+            accept(args: [value])
+        }
+    }
+}
+
+// usage in the test class
+
+class ExampleTests: XCTestCase {
+    let mock = MockObject.create()
+    
+    func test_withProperty() {
+        // expect
+        mock.expect { $0.value = 42 }
+        
+        // when
+        ...
+        
+        // then
+        mock.verify()
     }
 }
 ```
