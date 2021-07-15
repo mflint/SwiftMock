@@ -2,7 +2,9 @@
 //  Mock.swift
 //
 //  Created by Matthew Flint on 05/11/2018.
-//  Copyright © 2018 Green Light Apps. All rights reserved.
+//  Copyright © 2018-2021 Green Light Apps. All rights reserved.
+//
+//  https://github.com/mflint/SwiftMock
 //
 
 import XCTest
@@ -12,20 +14,32 @@ private struct MockExpectation: CustomDebugStringConvertible {
 	var actions: [([Any?]) -> Void]
 	var returnValue: Any?
 	
+	init?(callSummary: String?, actions: [([Any?]) -> Void], returnValue: Any?) {
+		guard let callSummary = callSummary else {
+			return nil
+		}
+		
+		self.callSummary = callSummary
+		self.actions = actions
+		self.returnValue = returnValue
+	}
+	
 	var debugDescription: String {
 		return callSummary
 	}
 }
 
-class MockExpectationBuilder<M, R> {
-	private let theCall: (M) -> R
-	private let mock: M
+final class MockExpectationBuilder<M, R>: MockExpectationHandler {
+	private let callBlock: (M) -> R
+	private let mockInit: (MockExpectationHandler?) -> Mock<M>
 	private var actions = [([Any?]) -> Void]()
 	private var returnValue: R?
+	private var callSummary: String?
+	private var multipleExpectations = false
 	
-	init(call: @escaping (M) -> R, mock: M) {
-		self.theCall = call
-		self.mock = mock
+	init(callBlock: @escaping (M) -> R, mockInit: @escaping (MockExpectationHandler?) -> Mock<M>) {
+		self.callBlock = callBlock
+		self.mockInit = mockInit
 	}
 	
 	func returning(_ returnValue: R) {
@@ -38,11 +52,26 @@ class MockExpectationBuilder<M, R> {
 		return self
 	}
 	
-	fileprivate func complete() {
-		_ = theCall(mock)
+	func accept(_ callSummary: String, actionArgs: [Any?]) -> Any? {
+		if self.callSummary != nil {
+			self.multipleExpectations = true
+			XCTFail("too many expectations in `.expect { }`")
+		}
+		
+		self.callSummary = callSummary
+		return self.returnValue
 	}
 	
-	fileprivate func build(callSummary: String) -> MockExpectation {
+	fileprivate func build() -> MockExpectation? {
+		let completionMock = self.mockInit(self) as! M
+		_ = self.callBlock(completionMock)
+		
+		if self.multipleExpectations {
+			// tried to set multiple expectations in one `.expect { }` block, which
+			// is not permitted
+			return nil
+		}
+		
 		return MockExpectation(callSummary: callSummary,
 							   actions: actions,
 							   returnValue: returnValue)
@@ -53,28 +82,24 @@ protocol MockExpectationHandler {
 	func accept(_ callSummary: String, actionArgs: [Any?]) -> Any?
 }
 
-private class MockExpectationCreator: MockExpectationHandler {
-	// incomplete expectations
-	private var expectationCompleters = [() -> Void]()
+private class MockExpectationCreator {
 	var expectations = [MockExpectation]()
-	var buildFunction: ((String) -> MockExpectation)?
+	private var expectationBuilderFunctions = [() -> MockExpectation?]()
 	
-	func builder<M, R>(for mock: M, call: @escaping (M) -> R) -> MockExpectationBuilder<M, R> {
-		let builder = MockExpectationBuilder<M, R>(call: call, mock: mock)
-		expectationCompleters.append(builder.complete)
+	func builder<M, R>(callBlock: @escaping (M) -> R, mockInit: @escaping (MockExpectationHandler?) -> Mock<M>) -> MockExpectationBuilder<M, R> {
+		let builder = MockExpectationBuilder(callBlock: callBlock, mockInit: mockInit)
+		self.expectationBuilderFunctions.append(builder.build)
 		return builder
 	}
 	
-	func completeExpectations() {
-		for completer in expectationCompleters {
-			completer()
-		}
-		expectationCompleters.removeAll()
+	func buildExpectations() {
+		self.expectations.append(contentsOf: self.expectationBuilderFunctions.compactMap { $0() })
+		self.expectationBuilderFunctions.removeAll()
 	}
 	
 	func claimExpectation(_ callSummary: String) -> MockExpectation? {
-		// try to complete any incomplete expectations
-		completeExpectations()
+		// build any unbuild expectations
+		self.buildExpectations()
 		
 		guard let index = expectations.firstIndex(where: { (expectation) -> Bool in
 			expectation.callSummary == callSummary
@@ -84,19 +109,9 @@ private class MockExpectationCreator: MockExpectationHandler {
 		
 		return expectations.remove(at: index)
 	}
-	
-	func accept(_ callSummary: String, actionArgs: [Any?]) -> Any? {
-		guard let buildFunction = buildFunction else {
-			preconditionFailure()
-		}
-		
-		let expectation = buildFunction(callSummary)
-		expectations.append(expectation)
-		return expectation.returnValue
-	}
 }
 
-class MockExpectationConsumer: MockExpectationHandler {
+private class MockExpectationConsumer: MockExpectationHandler {
 	fileprivate let expectationCreator: MockExpectationCreator
 	
 	fileprivate init(expectationCreator: MockExpectationCreator) {
@@ -134,16 +149,12 @@ class Mock<M> {
 	}
 	
 	@discardableResult
-	func expect<R>(_ theFunc: @escaping (M) -> R) -> MockExpectationBuilder<M, R> {
-		guard let expectationConsumer = expectationHandler as? MockExpectationConsumer else {
+	func expect<R>(_ callBlock: @escaping (M) -> R) -> MockExpectationBuilder<M, R> {
+		guard let expectationCreator = (expectationHandler as? MockExpectationConsumer)?.expectationCreator else {
 			preconditionFailure("internal error")
 		}
 		
-		let expectationCreator = expectationConsumer.expectationCreator
-		let completerMock = type(of: self).init(expectationHandler: expectationCreator) as! M
-		let expectationBuilder = expectationCreator.builder(for: completerMock, call: theFunc)
-		expectationCreator.buildFunction = expectationBuilder.build
-		return expectationBuilder
+		return expectationCreator.builder(callBlock: callBlock, mockInit: type(of: self).init)
 	}
 	
 	func verify(file: StaticString = #file, line: UInt = #line) {
@@ -153,8 +164,8 @@ class Mock<M> {
 		
 		let expectationCreator = expectationConsumer.expectationCreator
 		
-		// try to complete any incomplete expectations
-		expectationCreator.completeExpectations()
+		// build any unbuild expectations
+		expectationCreator.buildExpectations()
 		
 		if expectationCreator.expectations.count > 0 {
 			for expectation in expectationCreator.expectations {
@@ -190,7 +201,7 @@ class Mock<M> {
 			var result = "["
 			for (index, item) in array.enumerated() {
 				result += summary(for: item)
-				if index < array.count {
+				if index < array.count-1 {
 					result += ","
 				}
 			}
@@ -202,7 +213,7 @@ class Mock<M> {
 				if let value = dict[key] {
 					result += "\(summary(for: key)):\(summary(for:value))"
 				}
-				if index < dict.count {
+				if index < dict.count-1 {
 					result += ","
 				}
 			}
