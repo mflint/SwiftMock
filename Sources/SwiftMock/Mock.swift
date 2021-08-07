@@ -14,11 +14,9 @@ private struct MockExpectation: CustomDebugStringConvertible {
 	var actions: [([Any?]) -> Void]
 	var returnValue: Any?
 	
-	init?(callSummary: String?, actions: [([Any?]) -> Void], returnValue: Any?) {
-		guard let callSummary = callSummary else {
-			return nil
-		}
-		
+	init(callSummary: String,
+		  actions: [([Any?]) -> Void],
+		  returnValue: Any?) {
 		self.callSummary = callSummary
 		self.actions = actions
 		self.returnValue = returnValue
@@ -31,13 +29,13 @@ private struct MockExpectation: CustomDebugStringConvertible {
 
 final class MockExpectationBuilder<M, R>: MockExpectationHandler {
 	private let callBlock: (M) -> R
-	private let mockInit: (MockExpectationHandler?) -> Mock<M>
+	private let mockInit: (MockExpectationHandler) -> Mock<M>
 	private var actions = [([Any?]) -> Void]()
 	private var returnValue: R?
 	private var callSummary: String?
 	private var multipleExpectations = false
 	
-	init(callBlock: @escaping (M) -> R, mockInit: @escaping (MockExpectationHandler?) -> Mock<M>) {
+	init(callBlock: @escaping (M) -> R, mockInit: @escaping (MockExpectationHandler) -> Mock<M>) {
 		self.callBlock = callBlock
 		self.mockInit = mockInit
 	}
@@ -55,7 +53,7 @@ final class MockExpectationBuilder<M, R>: MockExpectationHandler {
 	func accept(_ callSummary: String, actionArgs: [Any?]) -> Any? {
 		if self.callSummary != nil {
 			self.multipleExpectations = true
-			XCTFail("too many expectations in `.expect { }`")
+			XCTFail("Too many expectations in `.expect { }`")
 		}
 		
 		self.callSummary = callSummary
@@ -66,9 +64,14 @@ final class MockExpectationBuilder<M, R>: MockExpectationHandler {
 		let completionMock = self.mockInit(self) as! M
 		_ = self.callBlock(completionMock)
 		
+		// check that an expectation was set by the callBlock
+		guard let callSummary = self.callSummary else {
+			return nil
+		}
+		
 		if self.multipleExpectations {
 			// tried to set multiple expectations in one `.expect { }` block, which
-			// is not permitted
+			// is not permitted - so don't expect anything
 			return nil
 		}
 		
@@ -86,7 +89,7 @@ private class MockExpectationCreator {
 	var expectations = [MockExpectation]()
 	private var expectationBuilderFunctions = [() -> MockExpectation?]()
 	
-	func builder<M, R>(callBlock: @escaping (M) -> R, mockInit: @escaping (MockExpectationHandler?) -> Mock<M>) -> MockExpectationBuilder<M, R> {
+	func builder<M, R>(callBlock: @escaping (M) -> R, mockInit: @escaping (MockExpectationHandler) -> Mock<M>) -> MockExpectationBuilder<M, R> {
 		let builder = MockExpectationBuilder(callBlock: callBlock, mockInit: mockInit)
 		self.expectationBuilderFunctions.append(builder.build)
 		return builder
@@ -133,7 +136,7 @@ private class MockExpectationConsumer: MockExpectationHandler {
 }
 
 class Mock<M> {
-	private let expectationHandler: MockExpectationHandler?
+	private let expectationHandler: MockExpectationHandler
 	
 	static func create() -> Self {
 		let expectationCreator = MockExpectationCreator()
@@ -144,7 +147,7 @@ class Mock<M> {
 		return consumerMock
 	}
 	
-	internal required init(expectationHandler: MockExpectationHandler?) {
+	internal required init(expectationHandler: MockExpectationHandler) {
 		self.expectationHandler = expectationHandler
 	}
 	
@@ -174,6 +177,8 @@ class Mock<M> {
 			}
 		}
 		
+		// remove all expectations, so they don't fail again
+		// later in the test
 		expectationCreator.expectations.removeAll()
 	}
 	
@@ -184,10 +189,9 @@ class Mock<M> {
 	
 	@discardableResult
 	internal func accept(func: String = #function, checkArgs: [Any?], actionArgs: [Any?]) -> Any? {
-		let callSummary = "\(`func`) " + summary(for: checkArgs)
-		
-		guard let expectationHandler = expectationHandler else {
-			preconditionFailure()
+		var callSummary = "\(`func`)"
+		if checkArgs.count > 0 {
+			callSummary += " " + summary(for: checkArgs)
 		}
 		
 		return expectationHandler.accept(callSummary, actionArgs: actionArgs)
@@ -195,8 +199,7 @@ class Mock<M> {
 	
 	private func summary(for argument: Any) -> String {
 		switch argument {
-		case let string as String:
-			return string
+		// TODO: unwrap optionals?
 		case let array as [Any]:
 			var result = "["
 			for (index, item) in array.enumerated() {
