@@ -27,7 +27,7 @@ private struct MockExpectation: CustomDebugStringConvertible {
 	}
 }
 
-final class MockExpectationBuilder<M, R>: MockExpectationHandler {
+public final class MockExpectationBuilder<M, R>: MockExpectationHandler {
 	private let callBlock: (M) -> R
 	private let mockInit: (MockExpectationHandler) -> Mock<M>
 	private var actions = [([Any?]) -> Void]()
@@ -40,17 +40,17 @@ final class MockExpectationBuilder<M, R>: MockExpectationHandler {
 		self.mockInit = mockInit
 	}
 	
-	func returning(_ returnValue: R) {
+	public func returning(_ returnValue: R) {
 		self.returnValue = returnValue
 	}
 	
 	@discardableResult
-	func doing(_ block: @escaping ([Any?]) -> Void) -> MockExpectationBuilder<M, R> {
+	public func doing(_ block: @escaping ([Any?]) -> Void) -> MockExpectationBuilder<M, R> {
 		actions.append(block)
 		return self
 	}
 	
-	func accept(_ callSummary: String, actionArgs: [Any?]) -> Any? {
+	public func accept(_ callSummary: String, actionArgs: [Any?]) -> Any? {
 		if self.callSummary != nil {
 			self.multipleExpectations = true
 			XCTFail("Too many expectations in `.expect { }`")
@@ -81,7 +81,7 @@ final class MockExpectationBuilder<M, R>: MockExpectationHandler {
 	}
 }
 
-protocol MockExpectationHandler {
+public protocol MockExpectationHandler {
 	func accept(_ callSummary: String, actionArgs: [Any?]) -> Any?
 }
 
@@ -135,10 +135,10 @@ private class MockExpectationConsumer: MockExpectationHandler {
 	}
 }
 
-class Mock<M> {
+open class Mock<M> {
 	private let expectationHandler: MockExpectationHandler
 	
-	static func create() -> Self {
+	public static func create() -> Self {
 		let expectationCreator = MockExpectationCreator()
 		let expectationConsumer = MockExpectationConsumer(expectationCreator: expectationCreator)
 		
@@ -147,12 +147,12 @@ class Mock<M> {
 		return consumerMock
 	}
 	
-	internal required init(expectationHandler: MockExpectationHandler) {
+	public required init(expectationHandler: MockExpectationHandler) {
 		self.expectationHandler = expectationHandler
 	}
 	
 	@discardableResult
-	func expect<R>(_ callBlock: @escaping (M) -> R) -> MockExpectationBuilder<M, R> {
+	public func expect<R>(_ callBlock: @escaping (M) -> R) -> MockExpectationBuilder<M, R> {
 		guard let expectationCreator = (expectationHandler as? MockExpectationConsumer)?.expectationCreator else {
 			preconditionFailure("internal error")
 		}
@@ -160,7 +160,7 @@ class Mock<M> {
 		return expectationCreator.builder(callBlock: callBlock, mockInit: type(of: self).init)
 	}
 	
-	func verify(file: StaticString = #file, line: UInt = #line) {
+	public func verify(file: StaticString = #file, line: UInt = #line) {
 		guard let expectationConsumer = expectationHandler as? MockExpectationConsumer else {
 			preconditionFailure("internal error")
 		}
@@ -183,12 +183,12 @@ class Mock<M> {
 	}
 	
 	@discardableResult
-	internal func accept(func: String = #function, args: [Any?] = []) -> Any? {
+	public func accept(func: String = #function, args: [Any?] = []) -> Any? {
 		return accept(func: `func`, checkArgs: args, actionArgs: args)
 	}
 	
 	@discardableResult
-	internal func accept(func: String = #function, checkArgs: [Any?], actionArgs: [Any?]) -> Any? {
+	public func accept(func: String = #function, checkArgs: [Any?], actionArgs: [Any?]) -> Any? {
 		var callSummary = "\(`func`)"
 		if checkArgs.count > 0 {
 			callSummary += " " + summary(for: checkArgs)

@@ -3,9 +3,9 @@
 ![](https://img.shields.io/badge/maintained-yes-green.svg)
 ![](https://img.shields.io/github/license/mflint/SwiftMock.svg)
 ![](https://img.shields.io/badge/platform-ios%20|%20osx%20|%20watchos%20|%20tvos-green.svg)
-![](https://img.shields.io/badge/swift_version-5.4-green.svg)
+![](https://img.shields.io/badge/swift_version-5.7-green.svg)
 
-_SwiftMock_ is a mocking framework for Swift 5.4.
+_SwiftMock_ is a mocking framework for Swift 5.7.
 
 ## Notes on the history of this repo
 
@@ -273,6 +273,8 @@ capturedCompletionBlock?(response)
 ## Installation
 
 The code is all in one file - so the easiest way to use _SwiftMock_ is to simply copy `Mock.swift` into your project.
+
+Alternatively, use Swift Package Manager.
 
 ## Feedback
 
