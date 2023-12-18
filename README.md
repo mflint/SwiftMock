@@ -3,9 +3,9 @@
 ![](https://img.shields.io/badge/maintained-yes-green.svg)
 ![](https://img.shields.io/github/license/mflint/SwiftMock.svg)
 ![](https://img.shields.io/badge/platform-ios%20|%20osx%20|%20watchos%20|%20tvos-green.svg)
-![](https://img.shields.io/badge/swift_version-5.7-green.svg)
+![](https://img.shields.io/badge/swift_version-5.9-green.svg)
 
-_SwiftMock_ is a mocking framework for Swift 5.7.
+_SwiftMock_ is a mocking framework for Swift 5.9.
 
 ## Notes on the history of this repo
 
@@ -14,6 +14,7 @@ _SwiftMock_ is a mocking framework for Swift 5.7.
 * November 2018: Rewrote this for Swift 4.2, with much simpler code
 * May 2020: Minor changes
 * July 2021: Fix crash when setting multiple expectations
+* December 2023: Mocks now have a name, which is reported when an expectation fails
 
 I spent a while using fakes (test-doubles which implement a prototol and simply set various `methodWasCalled` flags), but this doesn't scale well. It's easy to forget to make assertions, especially if a new function is added to a protocol long after the protocol's fake was written. I've since migrated a lot of code to using this new Mock, and it's _amazing_ how many defects I've found. Mocks FTW!
 
