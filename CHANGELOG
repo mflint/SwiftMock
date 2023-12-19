@@ -1,6 +1,7 @@
 5.9.0
 	adds code comments
 	support throwing functions
+	better handling of optional values in the call summary
 
 5.2.0
 	improvements to call summary description

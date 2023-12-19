@@ -221,7 +221,7 @@ final class BasicTests: XCTestCase {
 		
 		// expect
 		XCTExpectFailure(
-			options: .with(descriptions: "[TestProtocol] Unsatisfied expectation: funcWithOneArg(value:) [Optional(42)]")) {
+			options: .with(descriptions: "[TestProtocol] Unsatisfied expectation: funcWithOneArg(value:) [42]")) {
 			// when
 			mock.verify()
 		}
@@ -247,7 +247,7 @@ final class BasicTests: XCTestCase {
 		
 		// expect
 		XCTExpectFailure(
-			options: .with(descriptions: "[TestProtocol] Unsatisfied expectation: funcWithTwoArgs(value1:value2:) [Optional(42),Optional(\"meaning of life\")")) {
+			options: .with(descriptions: "[TestProtocol] Unsatisfied expectation: funcWithTwoArgs(value1:value2:) [42,meaning of life]")) {
 			// when
 			mock.verify()
 		}

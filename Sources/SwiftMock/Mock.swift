@@ -432,7 +432,6 @@ open class Mock<M> {
 
 	private func summary(for argument: Any) -> String {
 		switch argument {
-		// TODO: unwrap optionals?
 		case let array as [Any]:
 			var result = "["
 			for (index, item) in array.enumerated() {
@@ -455,8 +454,14 @@ open class Mock<M> {
 			}
 			result += "]"
 			return result
+		case  Optional<Any>.none:
+			// for nil values (Optional.none), return "nil"
+			return "nil"
+		case Optional<Any>.some(let value):
+			// for non-nil values (Optional.some), return the unwrapped value
+			return String(describing: value)
 		default:
-			return String(describing: argument)
+			preconditionFailure("don't expect this to happen, because we're already handling Optional.none and Optional.some")
 		}
 	}
 }
