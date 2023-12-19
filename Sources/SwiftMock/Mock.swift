@@ -206,7 +206,7 @@ private class MockExpectationConsumer: MockExpectationHandler {
 	func accept(_ callSummary: String, actionArgs: [Any?], file: StaticString, line: UInt) -> Any? {
 		// try to find (and remove) this call from the collection of expectations
 		guard let foundExpectation = expectationCreator.claimExpectation(callSummary) else {
-			XCTFail("[\(self.mockName)]: Unexpected call: \(callSummary)", file: file, line: line)
+			XCTFail("[\(self.mockName)] Unexpected call: \(callSummary)", file: file, line: line)
 			return nil
 		}
 		
@@ -274,7 +274,7 @@ open class Mock<M> {
 		if expectationCreator.expectations.count > 0 {
 			for expectation in expectationCreator.expectations {
 				let expectationDescription = String(describing: expectation)
-				XCTFail("[\(self.name)]: Unsatisfied expectation: \(expectationDescription)", file: file, line: line)
+				XCTFail("[\(self.name)] Unsatisfied expectation: \(expectationDescription)", file: file, line: line)
 			}
 		}
 		

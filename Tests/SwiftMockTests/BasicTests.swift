@@ -97,7 +97,7 @@ final class BasicTests: XCTestCase {
 		
 		// expect
 		XCTExpectFailure(
-			options: .with(descriptions: "Unexpected call: voidFunc()")) {
+			options: .with(descriptions: "[TestProtocol] Unexpected call: voidFunc()")) {
 			// when
 			mock.voidFunc()
 		}
@@ -143,7 +143,7 @@ final class BasicTests: XCTestCase {
 		
 		// expect
 		XCTExpectFailure(
-			options: .with(descriptions: "Unsatisfied expectation: voidFunc()")) {
+			options: .with(descriptions: "[TestProtocol] Unsatisfied expectation: voidFunc()")) {
 			// when
 			mock.verify()
 		}
@@ -157,7 +157,7 @@ final class BasicTests: XCTestCase {
 		}
 		
 		XCTExpectFailure(
-			options: .with(descriptions: "Unsatisfied expectation: voidFunc()")) {
+			options: .with(descriptions: "[TestProtocol] Unsatisfied expectation: voidFunc()")) {
 			// when
 			mock.verify()
 		}
@@ -187,7 +187,7 @@ final class BasicTests: XCTestCase {
 		
 		// expect
 		XCTExpectFailure(
-			options: .with(descriptions: "Unsatisfied expectation: funcWithOneArg(value:) [Optional(42)]")) {
+			options: .with(descriptions: "[TestProtocol] Unsatisfied expectation: funcWithOneArg(value:) [Optional(42)]")) {
 			// when
 			mock.verify()
 		}
@@ -200,7 +200,7 @@ final class BasicTests: XCTestCase {
 		
 		// expect
 		XCTExpectFailure(
-			options: .with(descriptions: "Unsatisfied expectation: funcWithOneOptionalArg(value:) [nil]")) {
+			options: .with(descriptions: "[TestProtocol] Unsatisfied expectation: funcWithOneOptionalArg(value:) [nil]")) {
 			// when
 			mock.verify()
 		}
@@ -213,7 +213,7 @@ final class BasicTests: XCTestCase {
 		
 		// expect
 		XCTExpectFailure(
-			options: .with(descriptions: "Unsatisfied expectation: funcWithTwoArgs(value1:value2:) [Optional(42),Optional(\"meaning of life\")")) {
+			options: .with(descriptions: "[TestProtocol] Unsatisfied expectation: funcWithTwoArgs(value1:value2:) [Optional(42),Optional(\"meaning of life\")")) {
 			// when
 			mock.verify()
 		}
@@ -235,7 +235,7 @@ final class BasicTests: XCTestCase {
 		
 		// expect
 		XCTExpectFailure(
-			options: .with(descriptions: "Unsatisfied expectation: funcWithArrayOfDicts(values:) [[one:1,two:2],[four:4,three:3]]")) {
+			options: .with(descriptions: "[TestProtocol] Unsatisfied expectation: funcWithArrayOfDicts(values:) [[one:1,two:2],[four:4,three:3]]")) {
 			// when
 			mock.verify()
 		}
@@ -321,7 +321,7 @@ final class BasicTests: XCTestCase {
 		
 		// expect
 		XCTExpectFailure(
-			options: .with(descriptions: "Unsatisfied expectation: voidFunc()")) {
+			options: .with(descriptions: "[TestProtocol] Unsatisfied expectation: voidFunc()")) {
 			// when
 			mock.verify()
 		}
