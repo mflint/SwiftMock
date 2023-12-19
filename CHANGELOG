@@ -1,3 +1,7 @@
+5.9.0
+	adds code comments
+	support throwing functions
+
 5.2.0
 	improvements to call summary description
 	bump version to match Swift 5.2

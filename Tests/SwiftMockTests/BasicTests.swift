@@ -21,6 +21,7 @@ private protocol TestProtocol {
 	func funcWithArrayOfDicts(values: [[String:Int]])
 	func funcWithActionArgs(value1: Int, value2: String)
 	func funcWithArgAndReturnValue(value: String) -> Int
+	func funcWhichThrows() throws -> String
 	func voidFunc()
 }
 
@@ -58,7 +59,11 @@ private class TestMock: Mock<TestProtocol>, TestProtocol {
 	func funcWithArgAndReturnValue(value: String) -> Int {
 		accept(args: [value]) as! Int
 	}
-	
+
+	func funcWhichThrows() throws -> String {
+		try throwingAccept() as! String
+	}
+
 	func voidFunc() {
 		accept()
 	}
@@ -67,6 +72,10 @@ private class TestMock: Mock<TestProtocol>, TestProtocol {
 // MARK: - the tests
 
 final class BasicTests: XCTestCase {
+	private enum Error: Swift.Error {
+		case vogons
+	}
+
 	func testVerify_noExpectations_doesNotFail() {
 		// given
 		let mock = TestMock.create()
@@ -116,7 +125,32 @@ final class BasicTests: XCTestCase {
 		// then
 		XCTAssertEqual(returnValue, "fnord")
 	}
-	
+
+	func testFuncWhichCanThrowButReturnsValue() throws {
+		// given
+		let mock = TestMock.create()
+		mock
+			.expect { try $0.funcWhichThrows() }
+			.returning("fnord")
+
+		// when
+		let returnValue = try mock.funcWhichThrows()
+
+		// then
+		XCTAssertEqual(returnValue, "fnord")
+	}
+
+	func testFuncWhichThrowsError() {
+		// given
+		let mock = TestMock.create()
+		mock
+			.expect { try $0.funcWhichThrows() }
+			.throwing(Error.vogons)
+
+		// when
+		XCTAssertThrowsError(try mock.funcWhichThrows())
+	}
+
 	func testMultipleExpectationsInExpectationBlock() {
 		// given
 		let mock = TestMock.create()
