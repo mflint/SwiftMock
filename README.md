@@ -51,6 +51,7 @@ protocol Frood {
     func voidFunction(value: Int)
     func functionReturningString() -> String
     func performAction(value: String, completion: @escaping () -> Void)
+    func throwingFunction() throws -> String
 }
 ```
 
@@ -69,30 +70,34 @@ class MockFrood: Mock<Frood>, Frood {
     func performAction(value: String, completion: @escaping () -> Void) {
         accept(checkArgs: [value], actionArgs: [completion])
     }
+
+    func throwingFunction() throws -> String {
+        try throwingAccept() as! String
+    }
 }
 ```
 
-Then create the mock in your test class, using `MockFrood.create()`. A test class would typically look something like this:
+Then create the mock in your test class, using `MockFrood.create()`. You may pass in a name for this mock, if you don't like the default name. A test class would typically look something like this:
 
 ```swift
 class MyTests: XCTestCase {
     private let mockFrood = MockFrood.create()
-    
+
     private func verify(file: StaticString = #file,
                         line: UInt = #line) {
         mockFrood.verify(file: file, line: line)
     }
-    
+
     func test_something() {
         // given
         let thing = MyThing(frood: mockFrood)
-        
+
         // expect
         mockFrood.expect { f in f.voidFunction(value: 42) }
-        
+
         // when
         thing.hoopy()
-        
+
         // then
         verify()
     }
@@ -121,13 +126,15 @@ mockObject.verify()
 ```swift
 // expect a call on a function which returns a String value
 // this uses the $0 _shorthand argument name_, if you prefer that style
-mockObject.expect { $0.functionReturningString() }.returning("dent")
+mockObject.expect { $0.functionReturningString() }
+    .returning("dent")
 ...
 mockObject.verify()
 ```
 
 ```swift
-// expect a call on a function which returns a String value, and also call a block
+// expect a call on a function which returns a String value, and also call
+// a block when the expectation is satisfied
 mockObject.expect { o in
         o.functionReturningString()
     }.doing { actionArgs in
@@ -137,10 +144,19 @@ mockObject.expect { o in
 mockObject.verify()
 ```
 
+```swift
+// expect a call on a function which should throw instead of returning
+// a value
+mockObject.expect { try $0.functionReturningString() }
+    .throwing(Error.vogons)
+...
+mockObject.verify()
+```
+
 Mocks are strict. This means they will reject _any_ unexpected call. If this annoys you, then perhaps you should be stubbing those calls instead of mocking?
 
 
-## Various ways to call the "accept" function when writing your Mock object
+## Various ways to call the `accept` or `throwingAccept` function when writing your Mock object
 
 ```swift
 // simplest use-case - mocking a function which takes no arguments and
@@ -227,14 +243,14 @@ class MockObject: Mock<ProtocolWithProperty>, ProtocolWithProperty {
 
 class ExampleTests: XCTestCase {
     let mock = MockObject.create()
-    
+
     func test_withProperty() {
         // expect
         mock.expect { $0.value = 42 }
-        
+
         // when
         ...
-        
+
         // then
         mock.verify()
     }
