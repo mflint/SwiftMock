@@ -299,7 +299,7 @@ Issues and pull-requests most welcome.
 
 ## Author
 
-Matthew Flint, m@tthew.org
+Matthew Flint
 
 ## License
 
