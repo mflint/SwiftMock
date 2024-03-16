@@ -6,32 +6,52 @@
 
 import XCTest
 
-/// A single expectated call on a mock.
-private struct MockExpectation: CustomDebugStringConvertible {
-	/// A unique string which describes the call - including function name and
-	/// important parameters.
-	var callSummary: String
-	/// A set of actions to perform if the expected call is made.
-	var actions: [([Any?]) -> Void]
-	/// A value that should be returned from the mock function call.
-	var result: Result<Any, Error>?
+/// The state of an expectation.
+private enum ClaimState {
+	/// The expectation exists, but doesn't yet have a `callSummary` which
+	/// describes the expected function call.
+	case incomplete
 
-	init(callSummary: String,
-		 actions: [([Any?]) -> Void],
-		 result: Result<Any, Error>?) {
-		self.callSummary = callSummary
-		self.actions = actions
-		self.result = result
-	}
-	
-	var debugDescription: String {
-		return callSummary
-	}
+	/// The expectation could not be created for some reason. Example: multiple
+	/// calls to mocked functions inside the `expect` block.
+	case invalid
+
+	/// The expectation has a `callSummary`, and hasn't yet been claimed.
+	case unclaimed(callSummary: String)
+
+	/// The expectation has been claimed.
+	case claimed(callSummary: String)
 }
 
-/// A class which builds a `MockExpectation`; created when a test calls
+/// A protocol for expectations which erases the generic types so we can
+/// store it in a collection.
+private protocol AnyExpectation {
+	/// A set of actions to perform if the expected call is made.
+	var actions: [([Any?]) -> Void] { get }
+
+	/// A value that should be returned from the mock function call.
+	var outcome: Result<Any, Error>? { get }
+
+	/// The state of this expectation.
+	var state: ClaimState { get }
+
+	/// This function makes the `callSummary` string, by calling the captured
+	/// `callBlock`. The `callSummary` is used for matching expected calls
+	/// against actual calls, and contains the expected function name and
+	/// important arguments that should be matched.
+	func makeCallSummary()
+
+	/// Test this expectation to see if its expected call matches the given
+	/// `callSummary`.
+	/// - Parameter callSummary: The `callSummary` string being handled by the
+	/// mock.
+	/// - Returns: Bool indicating whether the expectation has been claimed.
+	func claim(_ callSummary: String) -> Bool
+}
+
+/// A single expectated call on a mock; created when a test calls
 /// `mock.expect`.
-public final class MockExpectationBuilder<M, R>: MockExpectationHandler {
+public final class MockExpectation<M, R>: MockExpectationHandler, AnyExpectation {
 	/// The name of the mock (not the name of the expecation)
 	private let mockName: String
 
@@ -48,48 +68,43 @@ public final class MockExpectationBuilder<M, R>: MockExpectationHandler {
 	private let mockInit: (String, MockExpectationHandler) -> Mock<M>
 
 	/// A set of actions to perform if the expected call is made.
-	private var actions = [([Any?]) -> Void]()
+	fileprivate var actions = [([Any?]) -> Void]()
 
 	/// A value that should be returned from the mock function call.
-	private var result: Result<Any, Error>?
+	fileprivate var outcome: Result<Any, Error>?
 
-	/// A unique string which describes the call - including function name and
-	/// important parameters.
-	private var callSummary: String?
+	/// The state of this expectation.
+	fileprivate var state: ClaimState = .incomplete
 
-	/// Set if the test tries to set multiple expected calls in one `expect`
-	/// block.
-	private var multipleExpectations = false
-	
 	init(mockName: String, callBlock: @escaping (M) throws -> R, mockInit: @escaping (String, MockExpectationHandler) -> Mock<M>) {
 		self.mockName = mockName
 		self.callBlock = callBlock
 		self.mockInit = mockInit
 	}
 	
-	/// Adds a return value to the expectation builder.
+	/// Adds a return value to the expectation.
 	/// - Parameter returnValue: value to return.
 	public func returning(_ returnValue: R) {
-		self.result = .success(returnValue)
+		self.outcome = .success(returnValue)
 	}
 
 	/// Primes this mocked function to throw an error.
 	/// - Parameter error: error to throw.
 	public func throwing(_ error: Error) {
-		self.result = .failure(error)
+		self.outcome = .failure(error)
 	}
 
 	/// Adds a closure action which will be performed if the expected call is
 	/// made.
 	/// - Parameter block: action block
-	/// - Returns: `MockExpectationBuilder`
+	/// - Returns: `MockExpectation`
 	@discardableResult
-	public func doing(_ block: @escaping ([Any?]) -> Void) -> MockExpectationBuilder<M, R> {
+	public func doing(_ block: @escaping ([Any?]) -> Void) -> MockExpectation<M, R> {
 		actions.append(block)
 		return self
 	}
 	
-	/// Adds the expected function call to this expectation builder.
+	/// Adds the expected function call to this expectation.
 	/// - Parameters:
 	///   - callSummary: A unique string which describes the call - including
 	///   function name and important parameters.
@@ -100,14 +115,19 @@ public final class MockExpectationBuilder<M, R>: MockExpectationHandler {
 	///   - line: Calling line.
 	/// - Returns: Optional return value.
 	public func accept(_ callSummary: String, actionArgs: [Any?], file: StaticString, line: UInt) -> Any? {
-		if self.callSummary != nil {
-			self.multipleExpectations = true
+		switch self.state {
+		case .incomplete:
+			self.state = .unclaimed(callSummary: callSummary)
+		case .invalid:
+			break
+		case .unclaimed:
 			XCTFail("[\(self.mockName)]: Too many expectations in `.expect { }`", file: file, line: line)
+			self.state = .invalid
+		case .claimed:
+			break
 		}
-		
-		self.callSummary = callSummary
 
-		switch self.result {
+		switch self.outcome {
 		case nil:
 			return nil
 		case .success(let returnValue):
@@ -118,7 +138,7 @@ public final class MockExpectationBuilder<M, R>: MockExpectationHandler {
 		}
 	}
 
-	/// Adds the expected throwing function call to this expectation builder.
+	/// Adds the expected throwing function call to this expectation.
 	/// - Parameters:
 	///   - callSummary: A unique string which describes the call - including
 	///   function name and important parameters.
@@ -129,14 +149,19 @@ public final class MockExpectationBuilder<M, R>: MockExpectationHandler {
 	///   - line: Calling line.
 	/// - Returns: Optional return value.
 	public func throwingAccept(_ callSummary: String, actionArgs: [Any?], file: StaticString, line: UInt) throws -> Any? {
-		if self.callSummary != nil {
-			self.multipleExpectations = true
+		switch self.state {
+		case .incomplete:
+			self.state = .unclaimed(callSummary: callSummary)
+		case .invalid:
+			break
+		case .unclaimed:
 			XCTFail("[\(self.mockName)]: Too many expectations in `.expect { }`", file: file, line: line)
+			self.state = .invalid
+		case .claimed:
+			break
 		}
 
-		self.callSummary = callSummary
-
-		switch self.result {
+		switch self.outcome {
 		case nil:
 			return nil
 		case .success(let returnValue):
@@ -146,37 +171,58 @@ public final class MockExpectationBuilder<M, R>: MockExpectationHandler {
 		}
 	}
 
-	/// This function assembles the final expecatation.
-	/// When the return value and actions have been set, this `build()` function
-	/// will eventually be called which calls the captured `callBlock`.
-	/// This is when we find out the expected function name and important
-	/// arguments that should be matched.
-	/// - Returns: A function-call expectation.
-	fileprivate func build() -> MockExpectation? {
+	/// This function makes the `callSummary` string, by calling the captured
+	/// `callBlock`. The `callSummary` is used for matching expected calls
+	/// against actual calls, and contains the expected function name and
+	/// important arguments that should be matched.
+	fileprivate func makeCallSummary() {
+		// if we have a callSummary string, there's nothing to do
+		guard case ClaimState.incomplete = self.state else {
+			return
+		}
+
 		// make an instance of the `M` mock which contains this
-		// expectation builder
+		// expectation
 		let completionMock = self.mockInit(self.mockName, self) as! M
 		_ = try? self.callBlock(completionMock)
+	}
 
-		// check that an expectation was set by the callBlock
-		guard let callSummary = self.callSummary else {
-			return nil
+	/// Test this expectation to see if its expected call matches the given
+	/// `callSummary`.
+	/// - Parameter callSummary: The `callSummary` string being handled by the
+	/// mock.
+	/// - Returns: Bool indicating whether the expectation has been claimed.
+	fileprivate func claim(_ callSummary: String) -> Bool {
+		// make sure the `callSummary` has been made
+		self.makeCallSummary()
+
+		// can only claim this expectation if it's unclaimed
+		guard case ClaimState.unclaimed(let expectationCallSummary) = self.state else {
+			return false
 		}
-		
-		if self.multipleExpectations {
-			// tried to set multiple expectations in one `.expect { }` block, which
-			// is not permitted - so don't expect anything
-			return nil
+
+		if callSummary == expectationCallSummary {
+			self.state = .claimed(callSummary: callSummary)
+			return true
 		}
-		
-		return MockExpectation(callSummary: callSummary,
-							   actions: self.actions,
-							   result: self.result)
+
+		return false
+	}
+}
+
+extension MockExpectation: CustomDebugStringConvertible {
+	public var debugDescription: String {
+		switch self.state {
+		case .incomplete, .invalid:
+			return "<unknown>"
+		case let .unclaimed(callSummary), let .claimed(callSummary):
+			return callSummary
+		}
 	}
 }
 
 /// A protocol for the two types that can accept a mocked function call.
-/// * `MockExpectationBuilder` builds expectations that the text expects
+/// * `MockExpectation` builds expectations that the text expects
 /// * `MockExpectationConsumer` consumes those expecations when the
 /// system-under-test is being exercised
 public protocol MockExpectationHandler {
@@ -185,11 +231,9 @@ public protocol MockExpectationHandler {
 }
 
 /// Maintains a list of expectations on a mock object.
-private class MockExpectationCreator {
+private class MockExpectationCreator<M> {
 	/// a collection of built expecations
-	var expectations = [MockExpectation]()
-	/// a collection of functions that can build expectations
-	private var expectationBuilderFunctions = [() -> MockExpectation?]()
+	var expectations = [AnyExpectation]()
 	/// the name of the mock object
 	private let mockName: String
 
@@ -197,42 +241,38 @@ private class MockExpectationCreator {
 		self.mockName = mockName
 	}
 	
-	/// Creates a new expectation builder, which the test can use to configure
-	/// an expected function call, its return value and any actions to perform.
+	/// Creates a new expectation, which the test can use to configure an
+	/// expected function call, its return value and any actions to perform.
 	/// - Parameters:
 	///   - callBlock: the closure which defines the expected function call
 	///   - mockInit:
-	/// - Returns: expectation builder
-	func builder<M, R>(callBlock: @escaping (M) throws -> R, mockInit: @escaping (String, MockExpectationHandler) -> Mock<M>) -> MockExpectationBuilder<M, R> {
-		// create the builder
-		let builder = MockExpectationBuilder(mockName: self.mockName, callBlock: callBlock, mockInit: mockInit)
-		// capture the builder's `build()` function for later
-		self.expectationBuilderFunctions.append(builder.build)
-		return builder
+	/// - Returns: expectation
+	func expectation<R>(callBlock: @escaping (M) throws -> R, mockInit: @escaping (String, MockExpectationHandler) -> Mock<M>) -> MockExpectation<M, R> {
+		// create the expectation
+		let expectation = MockExpectation(mockName: self.mockName, callBlock: callBlock, mockInit: mockInit)
+		self.expectations.append(expectation)
+		return expectation
 	}
-	
-	/// This turns the _expectation builder_ functions into actual expectations.
-	/// We call this lazily when the system-under-test starts consuming
-	/// expectations.
-	func buildExpectations() {
-		self.expectations.append(contentsOf: self.expectationBuilderFunctions.compactMap { $0() })
-		self.expectationBuilderFunctions.removeAll()
+
+	/// This creates the `callSummary` string for every expectation. We call
+	/// this when the system-under-test needs to verify expectations.
+	func makeCallSummaries() {
+		for expectation in expectations {
+			expectation.makeCallSummary()
+		}
 	}
-	
+
 	/// Used by the expectation consumer to claim an expectation.
 	/// - Parameter callSummary: Identifies the expecation being claimed.
 	/// - Returns: An expectation, or `nil` if the call was unexpected.
-	func claimExpectation(_ callSummary: String) -> MockExpectation? {
-		// build any unbuild expectations
-		self.buildExpectations()
-		
-		guard let index = expectations.firstIndex(where: { (expectation) -> Bool in
-			expectation.callSummary == callSummary
-		}) else {
-			return nil
+	func claimExpectation(_ callSummary: String) -> AnyExpectation? {
+		for expectation in expectations {
+			if expectation.claim(callSummary) {
+				return expectation
+			}
 		}
-		
-		return expectations.remove(at: index)
+
+		return nil
 	}
 }
 
@@ -240,17 +280,17 @@ private class MockExpectationCreator {
 /// system-under-test calls functions on the mock, this
 /// `MockExpectationConsumer` checks that the call was expected, and
 /// performs any actions associated with the expectation.
-private class MockExpectationConsumer: MockExpectationHandler {
+private class MockExpectationConsumer<M>: MockExpectationHandler {
 	private let mockName: String
-	fileprivate let expectationCreator: MockExpectationCreator
-	
-	fileprivate init(mockName: String, expectationCreator: MockExpectationCreator) {
+	fileprivate let expectationCreator: MockExpectationCreator<M>
+
+	fileprivate init(mockName: String, expectationCreator: MockExpectationCreator<M>) {
 		self.mockName = mockName
 		self.expectationCreator = expectationCreator
 	}
 	
-	private func claim(_ callSummary: String, actionArgs: [Any?], file: StaticString, line: UInt) -> MockExpectation? {
-		// try to find (and remove) this call from the collection of expectations
+	private func claim(_ callSummary: String, actionArgs: [Any?], file: StaticString, line: UInt) -> AnyExpectation? {
+		// try to find an expectation which matches the given `callSummary`
 		guard let foundExpectation = expectationCreator.claimExpectation(callSummary) else {
 			XCTFail("[\(self.mockName)] Unexpected call: \(callSummary)", file: file, line: line)
 			return nil
@@ -271,7 +311,7 @@ private class MockExpectationConsumer: MockExpectationHandler {
 		}
 
 		// and return the return value to the caller
-		switch foundExpectation.result {
+		switch foundExpectation.outcome {
 		case nil:
 			return nil
 		case .success(let returnValue):
@@ -289,7 +329,7 @@ private class MockExpectationConsumer: MockExpectationHandler {
 		}
 
 		// and return the return value to the caller
-		switch foundExpectation.result {
+		switch foundExpectation.outcome {
 		case nil:
 			return nil
 		case .success(let returnValue):
@@ -311,7 +351,7 @@ open class Mock<M> {
 	/// - Returns: A mock object for the `M` protocol.
 	public static func create(mockName name: String? = nil) -> Self {
 		let mockName = name ?? String(describing: M.self)
-		let expectationCreator = MockExpectationCreator(mockName: mockName)
+		let expectationCreator = MockExpectationCreator<M>(mockName: mockName)
 			let expectationConsumer = MockExpectationConsumer(mockName: mockName, expectationCreator: expectationCreator)
 
 		let consumerMock = self.init(name: mockName, expectationHandler: expectationConsumer)
@@ -326,15 +366,14 @@ open class Mock<M> {
 	
 	/// Creates an expectation for a function call.
 	/// - Parameter callBlock: A block containing the expected function call.
-	/// - Returns: A builder object that can associate return value and actions
-	/// with the expectation.
+	/// - Returns: An expectation which may contain a call outcome and actions.
 	@discardableResult
-	public func expect<R>(_ callBlock: @escaping (M) throws -> R) -> MockExpectationBuilder<M, R> {
-		guard let expectationCreator = (expectationHandler as? MockExpectationConsumer)?.expectationCreator else {
+	public func expect<R>(_ callBlock: @escaping (M) throws -> R) -> MockExpectation<M, R> {
+		guard let expectationCreator = (expectationHandler as? MockExpectationConsumer<M>)?.expectationCreator else {
 			preconditionFailure("internal error")
 		}
 		
-		return expectationCreator.builder(callBlock: callBlock, mockInit: type(of: self).init)
+		return expectationCreator.expectation(callBlock: callBlock, mockInit: type(of: self).init)
 	}
 	
 	/// Verifies that the expectated function calls have all been satisfied.
@@ -342,18 +381,27 @@ open class Mock<M> {
 	///   - file: Calling file.
 	///   - line: Calling line.
 	public func verify(file: StaticString = #file, line: UInt = #line) {
-		guard let expectationConsumer = expectationHandler as? MockExpectationConsumer else {
+		guard let expectationConsumer = expectationHandler as? MockExpectationConsumer<M> else {
 			preconditionFailure("internal error")
 		}
 		
 		let expectationCreator = expectationConsumer.expectationCreator
 		
-		// build any unbuilt expectations
-		expectationCreator.buildExpectations()
+		// make sure all the `callSummary` values are built
+		expectationCreator.makeCallSummaries()
+
+		let unclaimedExpectations = expectationCreator.expectations.filter {
+			switch $0.state {
+			case .incomplete, .invalid, .claimed:
+				return false
+			case .unclaimed:
+				return true
+			}
+		}
 		
-		if expectationCreator.expectations.count > 0 {
-			for expectation in expectationCreator.expectations {
-				let expectationDescription = String(describing: expectation)
+		if !unclaimedExpectations.isEmpty {
+			for unclaimedExpectation in unclaimedExpectations {
+				let expectationDescription = String(describing: unclaimedExpectation)
 				XCTFail("[\(self.name)] Unsatisfied expectation: \(expectationDescription)", file: file, line: line)
 			}
 		}
