@@ -153,7 +153,83 @@ mockObject.expect { try $0.functionReturningString() }
 mockObject.verify()
 ```
 
+```swift
+// expect an async function call, returning a value
+
+// this is a test in two parts. The first part checks that
+// the expected async function was called, and is performed by
+// the test in a Task
+
+// expect
+// * the mocked async function should be called, and it will
+///  eventually return "42""
+let future = mockObject.expect { await $0.lifeTheUniverseAndEverything() {
+    .asyncReturning("42")
+
+// when
+Task {
+    // Note: the mock uses an internal XCTestExpectation to
+    // ensure that the code in this Task has completed before
+    // the expected calls are verified.
+    await systemUnderTest.askTheUltimateQuestion()
+}
+
+// then
+await mockObject.verify()
+
+// second part of the test completes the async func, and returns
+// the return value to the caller
+
+// expect
+...
+
+// when
+future.fulfill()
+
+// then
+...
+```
+
+```swift
+// expect an async function call which will eventually throw
+
+// this is a test in two parts. The first part checks that
+// the expected async function was called, and is performed by
+// the test in a Task
+
+// expect
+// * the mocked async function should be called, and it will
+//   eventually throw an Error
+let future = mockObject.expect { await $0.lifeTheUniverseAndEverything() {
+    .asyncThrowing(Error.vogons)
+
+// when
+Task {
+    // Note: the mock uses an internal XCTestExpectation to
+    // ensure that the code in this Task has completed before
+    // the expected calls are verified.
+    await systemUnderTest.askTheUltimateQuestion()
+}
+
+// then
+await mockObject.verify()
+
+// second part of the test completes the async func, and throws
+// the error
+
+// expect
+...
+
+// when
+future.fulfill()
+
+// then
+... 
+```
+
 Mocks are strict. This means they will reject _any_ unexpected call. If this annoys you, then perhaps you should be stubbing those calls instead of mocking?
+
+When testing async functions, the mock uses an internal `XCTestExpectation` to (hopefully!) ensure that the mock won't be verified until the expected async call completes.
 
 
 ## Various ways to call the `accept` or `throwingAccept` function when writing your Mock object
@@ -176,6 +252,26 @@ class Mock<Protocol>, Protocol {
 class Mock<Protocol>, Protocol {
     func myFunc() -> String {
         return accept() as! String
+    }
+}
+```
+
+```swift
+// mocking a throwing function
+
+class Mock<Protocol>, Protocol {
+    func myFunc() throws {
+        return try throwingAccept()
+    }
+}
+```
+
+```swift
+// mocking an async function
+
+class Mock<Protocol>, Protocol {
+    func myFunc() async -> String {
+        return await accept() as! String
     }
 }
 ```

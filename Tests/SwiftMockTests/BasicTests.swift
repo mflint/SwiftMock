@@ -23,6 +23,11 @@ private protocol TestProtocol {
 	func funcWithArgAndReturnValue(value: String) -> Int
 	func funcWhichThrows() throws -> String
 	func voidFunc()
+
+	func asyncVoidFunc() async
+	func asyncFuncReturnsString() async -> String
+	func asyncFuncWithActionArgs(value1: Int, value2: String) async
+	func asyncThrowingFunc(value: String) async throws -> Int
 }
 
 // MARK: - the mock to test
@@ -66,6 +71,22 @@ private class TestMock: Mock<TestProtocol>, TestProtocol {
 
 	func voidFunc() {
 		accept()
+	}
+
+	func asyncVoidFunc() async {
+		await accept()
+	}
+
+	func asyncFuncReturnsString() async -> String {
+		return await accept() as! String
+	}
+
+	func asyncFuncWithActionArgs(value1: Int, value2: String) async {
+		await accept(checkArgs: [], actionArgs: [value1, value2])
+	}
+
+	func asyncThrowingFunc(value: String) async throws -> Int {
+		return try await throwingAccept(args: [value]) as! Int
 	}
 }
 
@@ -389,6 +410,120 @@ final class BasicTests: XCTestCase {
 
 		// when
 		mock.verify()
+	}
+
+	// MARK: - Async calls
+
+	func testAsyncVoidFunc_pass() async {
+		// given
+		let mock = TestMock.create()
+		mock.expect { await $0.asyncVoidFunc() }
+
+		// when
+		await mock.asyncVoidFunc()
+
+		// then
+		await mock.verify()
+	}
+
+	func testAsyncVoidFunc_notCalled_verify_fail() async {
+		// given
+		let mock = TestMock.create()
+		mock.expect { await $0.asyncVoidFunc() }
+
+		// when
+		// nothing
+
+		// then
+		XCTExpectFailure(options: .with(descriptions: "Unsatisfied expectation: asyncVoidFunc()"))
+		await mock.verify()
+	}
+
+	func testAsyncVoidFunc_unexpectedCall_fail() async {
+		// given
+		let mock = TestMock.create()
+
+		// when
+		XCTExpectFailure(options: .with(descriptions: "Unexpected call: asyncVoidFunc()"))
+		await mock.asyncVoidFunc()
+	}
+
+	func testAsyncReturnsInt() async {
+		// test that we can set expectations on an async function being called
+
+		// given
+		let mock = TestMock.create()
+		let future = mock.expect { await $0.asyncFuncReturnsString() }
+			.asyncReturning("Beeblebrox")
+
+		// when
+		Task {
+			let result = await mock.asyncFuncReturnsString()
+			XCTAssertEqual(result, "Beeblebrox")
+		}
+
+		await mock.verify()
+
+		// check that mocked async functions can return a value to the
+		// system-under-test
+
+		// when
+		future.fulfill()
+
+		// then
+		// XCTAssertEqual in the Task will check the return value
+	}
+
+	func testAsyncFuncWithActions() async {
+		// given
+		var capturedInt: Int?
+		var capturedString: String?
+
+		let mock = TestMock.create()
+		mock.expect { await $0.asyncFuncWithActionArgs(value1: 1, value2: "hi") }
+			.doing { actionArgs in
+				capturedInt = actionArgs[0] as? Int
+				capturedString = actionArgs[1] as? String
+			}
+
+		// when
+		Task {
+			await mock.asyncFuncWithActionArgs(value1: 1, value2: "hi")
+		}
+
+		await mock.verify()
+		XCTAssertEqual(capturedInt, 1)
+		XCTAssertEqual(capturedString, "hi")
+	}
+
+	func testAsyncThrowingFunc() async {
+		// test that we can set expectations on an async function being called
+
+		// given
+		let mock = TestMock.create()
+		let future = mock.expect { try await $0.asyncThrowingFunc(value: "Zaphod") }
+			.asyncThrowing(Error.vogons)
+
+		// when
+		Task {
+			do {
+				_ = try await mock.asyncThrowingFunc(value: "Zaphod")
+				XCTFail("Expected error")
+			} catch {
+				XCTAssertEqual(error as? Error, Error.vogons)
+			}
+		}
+
+		await mock.verify()
+
+		// check that mocked async functions can return a value to the
+		// system-under-test
+
+		// when
+		future.fulfill()
+
+		// then
+		// XCTAssertEqual in the Task will check the thrown error
 	}
 }
 
