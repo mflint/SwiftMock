@@ -21,10 +21,12 @@ private protocol TestProtocol {
 	func funcWithArrayOfDicts(values: [[String:Int]])
 	func funcWithActionArgs(value1: Int, value2: String)
 	func funcWithArgAndReturnValue(value: String) -> Int
+	func funcWhichThrowsWithArgAndReturnValue(value: String) throws -> Int
 	func funcWhichThrows() throws -> String
 	func voidFunc()
 
 	func asyncVoidFunc() async
+	func asyncFuncWithArg(value: String) async -> Int
 	func asyncFuncReturnsString() async -> String
 	func asyncFuncWithActionArgs(value1: Int, value2: String) async
 	func asyncThrowingFunc(value: String) async throws -> Int
@@ -65,6 +67,10 @@ private class TestMock: Mock<TestProtocol>, TestProtocol {
 		accept(args: [value]) as! Int
 	}
 
+	func funcWhichThrowsWithArgAndReturnValue(value: String) throws -> Int {
+		try throwingAccept(args: [value]) as! Int
+	}
+
 	func funcWhichThrows() throws -> String {
 		try throwingAccept() as! String
 	}
@@ -75,6 +81,10 @@ private class TestMock: Mock<TestProtocol>, TestProtocol {
 
 	func asyncVoidFunc() async {
 		await accept()
+	}
+
+	func asyncFuncWithArg(value: String) async -> Int {
+		await accept(args: [value]) as! Int
 	}
 
 	func asyncFuncReturnsString() async -> String {
@@ -443,9 +453,11 @@ final class BasicTests: XCTestCase {
 		// given
 		let mock = TestMock.create()
 
-		// when
-		XCTExpectFailure(options: .with(descriptions: "Unexpected call: asyncVoidFunc()"))
-		await mock.asyncVoidFunc()
+		Task {
+			// when
+			XCTExpectFailure(options: .with(descriptions: "Unexpected call: asyncVoidFunc()"))
+			await mock.asyncVoidFunc()
+		}
 	}
 
 	func testAsyncReturnsInt() async {
@@ -524,6 +536,125 @@ final class BasicTests: XCTestCase {
 
 		// then
 		// XCTAssertEqual in the Task will check the thrown error
+	}
+
+	func testArgsDoNotMatch_returnBestGuessValue_doesNotCrash() {
+		// given
+		let mock = TestMock.create()
+
+		mock
+			.expect { $0.funcWithArgAndReturnValue(value: "Vogons") }
+			.returning(42)
+
+		// when
+		let result = XCTExpectFailure(
+			options: .with(descriptions: "[TestProtocol] Unexpected call: funcWithArgAndReturnValue(value:) [Humans]")) {
+			// when
+			mock.funcWithArgAndReturnValue(value: "Humans")
+		}
+
+		// then
+		XCTAssertEqual(result, 42)
+	}
+
+	func testThrowingFunction_argsDoNotMatch_returnBestGuessValue_doesNotCrash() throws {
+		// given
+		let mock = TestMock.create()
+
+		mock
+			.expect { try $0.funcWhichThrowsWithArgAndReturnValue(value: "Vogons") }
+			.returning(42)
+
+		// expect
+		XCTExpectFailure(options: .with(descriptions: "[TestProtocol] Unexpected call: funcWhichThrowsWithArgAndReturnValue(value:) [Humans]"))
+
+		// when
+		let result = try mock.funcWhichThrowsWithArgAndReturnValue(value: "Humans")
+		XCTAssertEqual(result, 42)
+	}
+
+	func testThrowingFunction_argsDoNotMatch_throwsBestGuessError_doesNotCrash() {
+		// given
+		let mock = TestMock.create()
+
+		mock
+			.expect { try $0.funcWhichThrowsWithArgAndReturnValue(value: "Vogons") }
+			.throwing(Error.vogons)
+
+		// expect
+		XCTExpectFailure(options: .with(descriptions: "[TestProtocol] Unexpected call: funcWhichThrowsWithArgAndReturnValue(value:) [Humans]"))
+
+		// when
+		XCTAssertThrowsError(try mock.funcWhichThrowsWithArgAndReturnValue(value: "Humans"))
+	}
+
+	func testAsyncFunction_argsDoNotMatch_neverReturnsValue_doesNotCrash() async {
+		// given
+		let mock = TestMock.create()
+
+		_ = mock
+			.expect { await $0.asyncFuncWithArg(value: "Vogons") }
+			.asyncReturning(42)
+
+		Task {
+			// expect
+			XCTExpectFailure(options: .with(descriptions: "[TestProtocol] Unexpected call: asyncFuncWithArg(value:) [Humans]"))
+
+			// when
+			_ = await mock.asyncFuncWithArg(value: "Humans")
+		}
+	}
+
+	func testAsyncThrowingFunction_argsDoNotMatch_neverReturnsValue_doesNotCrash() async throws {
+		// given
+		let mock = TestMock.create()
+
+		_ = mock
+			.expect { try await $0.asyncThrowingFunc(value: "Vogons") }
+			.asyncReturning(42)
+
+		// when
+		Task {
+			XCTExpectFailure(options: .with(descriptions: "[TestProtocol] Unexpected call: asyncThrowingFunc(value:) [Humans]"))
+
+			_ = try await mock.asyncThrowingFunc(value: "Humans")
+		}
+	}
+
+	func testAsyncThrowingFunction_funcDoesNotMatch_doesNotCrash() async throws {
+		// given
+		let mock = TestMock.create()
+
+		_ = mock
+			.expect { try await $0.asyncThrowingFunc(value: "Vogons") }
+			.asyncReturning(42)
+
+		// when
+		Task {
+			XCTExpectFailure(options: .with(descriptions: "[TestProtocol] Unexpected call: asyncFuncReturnsString()"))
+
+			_ = await mock.asyncFuncReturnsString()
+
+			XCTFail("do not expect the async function to ever return")
+		}
+	}
+
+	func testAsyncThrowingFunction_argsDoNotMatch_neverThrowsError_doesNotCrash() async throws {
+		// given
+		let mock = TestMock.create()
+
+		_ = mock
+			.expect { try await $0.asyncThrowingFunc(value: "Vogons") }
+			.asyncThrowing(Error.vogons)
+
+		Task {
+			// expect
+			XCTExpectFailure(options: .with(descriptions: "[TestProtocol] Unexpected call: asyncThrowingFunc(value:) [Humans]"))
+
+			// when
+			_ = try await mock.asyncThrowingFunc(value: "Humans")
+			XCTFail("expected error")
+		}
 	}
 }
 

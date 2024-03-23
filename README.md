@@ -162,7 +162,7 @@ mockObject.verify()
 
 // expect
 // * the mocked async function should be called, and it will
-///  eventually return "42""
+///  eventually return "42"
 let future = mockObject.expect { await $0.lifeTheUniverseAndEverything() {
     .asyncReturning("42")
 
@@ -175,6 +175,7 @@ Task {
 }
 
 // then
+// * check that the expected function was called
 await mockObject.verify()
 
 // second part of the test completes the async func, and returns
@@ -184,6 +185,7 @@ await mockObject.verify()
 ...
 
 // when
+// * return the value "42" asynchronously
 future.fulfill()
 
 // then
@@ -212,6 +214,7 @@ Task {
 }
 
 // then
+// * check that the expected function was called
 await mockObject.verify()
 
 // second part of the test completes the async func, and throws
@@ -221,6 +224,7 @@ await mockObject.verify()
 ...
 
 // when
+// * throw the error asynchronously
 future.fulfill()
 
 // then
@@ -261,7 +265,7 @@ class Mock<Protocol>, Protocol {
 
 class Mock<Protocol>, Protocol {
     func myFunc() throws {
-        return try throwingAccept()
+        try throwingAccept()
     }
 }
 ```

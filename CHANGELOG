@@ -1,5 +1,7 @@
 5.10.0
 	support async and async throwing functions
+	fixes an internal crash if the arguments for a mocked function don't match,
+	and the function needs to return a non-optional value
 
 5.9.0
 	adds code comments
