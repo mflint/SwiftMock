@@ -14,7 +14,8 @@ _SwiftMock_ is a mocking framework for Swift 5.9.
 * November 2018: Rewrote this for Swift 4.2, with much simpler code
 * May 2020: Minor changes
 * July 2021: Fix crash when setting multiple expectations
-* December 2023: Mocks now have a name, which is reported when an expectation fails
+* December 2023: Mocks now have a name, which is reported when an expectation fails; adds support for throwing functions
+* June 2024: Adds support for async functions; improves failure reporting from the `verify()` function
 
 I spent a while using fakes (test-doubles which implement a prototol and simply set various `methodWasCalled` flags), but this doesn't scale well. It's easy to forget to make assertions, especially if a new function is added to a protocol long after the protocol's fake was written. I've since migrated a lot of code to using this new Mock, and it's _amazing_ how many defects I've found. Mocks FTW!
 
@@ -60,7 +61,7 @@ In your test target you'll need to create a ```MockFrood``` which extends ```Moc
 ```swift
 class MockFrood: Mock<Frood>, Frood {
     func voidFunction(value: Int) {
-        accept(args: [value])
+        accept(value)
     }
 
     func functionReturningString() -> String {
@@ -117,9 +118,10 @@ I'd probably put the mock objects in a separate group in the test part of my pro
 _SwiftMock_ syntax requires the expected call in a block; this might look weird at first, but means that we have a readable way of setting expectations, and we know the return value _before_ the expectation is set.
 
 ```swift
-// expect a call on a void function
+// expect a call to a function which returns no value
 mockObject.expect { o in o.voidFunction(42) }
 ...
+// verify that the expected function was called
 mockObject.verify()
 ```
 
@@ -162,8 +164,8 @@ mockObject.verify()
 
 // expect
 // * the mocked async function should be called, and it will
-///  eventually return "42"
-let future = mockObject.expect { await $0.lifeTheUniverseAndEverything() {
+//   eventually return "42"
+let future = mockObject.expect { await $0.lifeTheUniverseAndEverything() }
     .asyncReturning("42")
 
 // when
@@ -185,7 +187,8 @@ await mockObject.verify()
 ...
 
 // when
-// * return the value "42" asynchronously
+// * return the value "42" to the system-under-test who is still
+//   waiting for the return value
 future.fulfill()
 
 // then
@@ -202,7 +205,7 @@ future.fulfill()
 // expect
 // * the mocked async function should be called, and it will
 //   eventually throw an Error
-let future = mockObject.expect { await $0.lifeTheUniverseAndEverything() {
+let future = mockObject.expect { await $0.lifeTheUniverseAndEverything() }
     .asyncThrowing(Error.vogons)
 
 // when
@@ -224,7 +227,8 @@ await mockObject.verify()
 ...
 
 // when
-// * throw the error asynchronously
+// * throw the error to the system-under-test who is still
+//   waiting for the return value or an error
 future.fulfill()
 
 // then
@@ -287,7 +291,7 @@ class Mock<Protocol>, Protocol {
 
 class Mock<Protocol>, Protocol {
     func myFunc(personName: String, yearOfBirth: Int) {
-        accept(args: [personName, yearOfBirth])
+        accept(personName, yearOfBirth)
     }
 }
 ```
@@ -303,10 +307,10 @@ struct Employee {
 
 class Mock<Protocol>, Protocol {
     func myFunc(employee: Employee) {
-        // calling `accept(args: [employee])` here will not work well - so
-        // you should pass the important (identifying) parts of the struct
-		// instead
-        accept(args: [employee.personID, employee.personName])
+        // calling `accept(employee)` here will not work well - so you
+        // should pass the important (identifying) parts of the struct
+        // instead
+        accept(employee.personID, employee.personName)
     }
 }
 ```
@@ -318,7 +322,7 @@ class Mock<Protocol>, Protocol {
 
 class Mock<Protocol>, Protocol {
     func myFunc(value: Int) {
-        accept(func: "functionName", args: [value])
+        accept(func: "functionName", value)
     }
 }
 ```
@@ -334,7 +338,7 @@ protocol ProtocolWithProperty: AnyObject {
 class MockObject: Mock<ProtocolWithProperty>, ProtocolWithProperty {
     var value: Int = 0 {
         didSet {
-            accept(args: [value])
+            accept(value)
         }
     }
 }
