@@ -17,6 +17,7 @@ private protocol TestProtocol {
 	func returnsOptionalString() -> String?
 	func funcWithOneOptionalArg(value: Int?)
 	func funcWithOneArg(value: Int)
+	func funcWithOneBool(_ value: Bool)
 	func funcWithTwoArgs(value1: Int, value2: String)
 	func funcWithArrayOfDicts(values: [[String:Int]])
 	func funcWithActionArgs(value1: Int, value2: String)
@@ -44,19 +45,23 @@ private class TestMock: Mock<TestProtocol>, TestProtocol {
 	}
 	
 	func funcWithOneOptionalArg(value: Int?) {
-		accept(args: [value])
+		accept(value)
 	}
 	
 	func funcWithOneArg(value: Int) {
-		accept(args: [value])
+		accept(value)
 	}
-	
+
+	func funcWithOneBool(_ value: Bool) {
+		accept(value)
+	}
+
 	func funcWithTwoArgs(value1: Int, value2: String) {
-		accept(args: [value1, value2])
+		accept(value1, value2)
 	}
 	
 	func funcWithArrayOfDicts(values: [[String : Int]]) {
-		accept(args: values)
+		accept(values)
 	}
 	
 	func funcWithActionArgs(value1: Int, value2: String) {
@@ -64,11 +69,11 @@ private class TestMock: Mock<TestProtocol>, TestProtocol {
 	}
 	
 	func funcWithArgAndReturnValue(value: String) -> Int {
-		accept(args: [value]) as! Int
+		accept(value) as! Int
 	}
 
 	func funcWhichThrowsWithArgAndReturnValue(value: String) throws -> Int {
-		try throwingAccept(args: [value]) as! Int
+		try throwingAccept(value) as! Int
 	}
 
 	func funcWhichThrows() throws -> String {
@@ -84,7 +89,7 @@ private class TestMock: Mock<TestProtocol>, TestProtocol {
 	}
 
 	func asyncFuncWithArg(value: String) async -> Int {
-		await accept(args: [value]) as! Int
+		await accept(value) as! Int
 	}
 
 	func asyncFuncReturnsString() async -> String {
@@ -96,7 +101,7 @@ private class TestMock: Mock<TestProtocol>, TestProtocol {
 	}
 
 	func asyncThrowingFunc(value: String) async throws -> Int {
-		return try await throwingAccept(args: [value]) as! Int
+		return try await throwingAccept(value) as! Int
 	}
 }
 
@@ -141,6 +146,12 @@ final class BasicTests: XCTestCase {
 			// when
 			mock.voidFunc()
 		}
+
+		// then
+		XCTExpectFailure(
+			options: .with(descriptions: "[TestProtocol] Unexpected call: voidFunc()")) {
+			mock.verify()
+		}
 	}
 	
 	func testReturnValue() {
@@ -155,6 +166,7 @@ final class BasicTests: XCTestCase {
 		
 		// then
 		XCTAssertEqual(returnValue, "fnord")
+		mock.verify()
 	}
 
 	func testFuncWhichCanThrowButReturnsValue() throws {
@@ -169,6 +181,7 @@ final class BasicTests: XCTestCase {
 
 		// then
 		XCTAssertEqual(returnValue, "fnord")
+		mock.verify()
 	}
 
 	func testFuncWhichThrowsError() {
@@ -180,6 +193,7 @@ final class BasicTests: XCTestCase {
 
 		// when
 		XCTAssertThrowsError(try mock.funcWhichThrows())
+		mock.verify()
 	}
 
 	func testMultipleExpectationsInExpectationBlock() {
@@ -252,7 +266,7 @@ final class BasicTests: XCTestCase {
 		
 		// expect
 		XCTExpectFailure(
-			options: .with(descriptions: "[TestProtocol] Unsatisfied expectation: funcWithOneArg(value:) [42]")) {
+			options: .with(descriptions: "[TestProtocol] Unsatisfied expectation: funcWithOneArg(42)")) {
 			// when
 			mock.verify()
 		}
@@ -265,7 +279,7 @@ final class BasicTests: XCTestCase {
 		
 		// expect
 		XCTExpectFailure(
-			options: .with(descriptions: "[TestProtocol] Unsatisfied expectation: funcWithOneOptionalArg(value:) [nil]")) {
+			options: .with(descriptions: "[TestProtocol] Unsatisfied expectation: funcWithOneOptionalArg(nil)")) {
 			// when
 			mock.verify()
 		}
@@ -278,7 +292,7 @@ final class BasicTests: XCTestCase {
 		
 		// expect
 		XCTExpectFailure(
-			options: .with(descriptions: "[TestProtocol] Unsatisfied expectation: funcWithTwoArgs(value1:value2:) [42,meaning of life]")) {
+			options: .with(descriptions: "[TestProtocol] Unsatisfied expectation: funcWithTwoArgs(42,meaning of life)")) {
 			// when
 			mock.verify()
 		}
@@ -300,7 +314,7 @@ final class BasicTests: XCTestCase {
 		
 		// expect
 		XCTExpectFailure(
-			options: .with(descriptions: "[TestProtocol] Unsatisfied expectation: funcWithArrayOfDicts(values:) [[one:1,two:2],[four:4,three:3]]")) {
+			options: .with(descriptions: "[TestProtocol] Unsatisfied expectation: funcWithArrayOfDicts([[one:1,two:2],[four:4,three:3]])")) {
 			// when
 			mock.verify()
 		}
@@ -403,9 +417,12 @@ final class BasicTests: XCTestCase {
 		// expect
 		XCTExpectFailure(
 			options: .with(descriptions: "Unexpected call: voidFunc()")) {
-			// when
-			mock.voidFunc()
-		}
+				// when
+				mock.voidFunc()
+
+				// then
+				mock.verify()
+			}
 	}
 	
 	func testFuncExpectedTwice_performedTwice_pass() {
@@ -548,12 +565,15 @@ final class BasicTests: XCTestCase {
 
 		// when
 		let result = XCTExpectFailure(
-			options: .with(descriptions: "[TestProtocol] Unexpected call: funcWithArgAndReturnValue(value:) [Humans]")) {
-			// when
-			mock.funcWithArgAndReturnValue(value: "Humans")
-		}
+			options: .with(descriptions: "XCTAssertEqual failed: (\"funcWithArgAndReturnValue(Vogons)\") is not equal to (\"funcWithArgAndReturnValue(Humans)\")")) {
+				mock.funcWithArgAndReturnValue(value: "Humans")
+			}
 
 		// then
+		XCTExpectFailure(
+			options: .with(descriptions: "XCTAssertEqual failed: (\"funcWithArgAndReturnValue(Vogons)\") is not equal to (\"funcWithArgAndReturnValue(Humans)\")")) {
+				mock.verify()
+			}
 		XCTAssertEqual(result, 42)
 	}
 
@@ -565,11 +585,17 @@ final class BasicTests: XCTestCase {
 			.expect { try $0.funcWhichThrowsWithArgAndReturnValue(value: "Vogons") }
 			.returning(42)
 
-		// expect
-		XCTExpectFailure(options: .with(descriptions: "[TestProtocol] Unexpected call: funcWhichThrowsWithArgAndReturnValue(value:) [Humans]"))
-
 		// when
-		let result = try mock.funcWhichThrowsWithArgAndReturnValue(value: "Humans")
+		let result = try XCTExpectFailure(
+			options: .with(descriptions: "XCTAssertEqual failed: (\"funcWhichThrowsWithArgAndReturnValue(Vogons)\") is not equal to (\"funcWhichThrowsWithArgAndReturnValue(Humans)\")")) {
+				try mock.funcWhichThrowsWithArgAndReturnValue(value: "Humans")
+			}
+
+		// then
+		XCTExpectFailure(
+			options: .with(descriptions: "XCTAssertEqual failed: (\"funcWhichThrowsWithArgAndReturnValue(Vogons)\") is not equal to (\"funcWhichThrowsWithArgAndReturnValue(Humans)\")")) {
+				mock.verify()
+			}
 		XCTAssertEqual(result, 42)
 	}
 
@@ -581,11 +607,24 @@ final class BasicTests: XCTestCase {
 			.expect { try $0.funcWhichThrowsWithArgAndReturnValue(value: "Vogons") }
 			.throwing(Error.vogons)
 
-		// expect
-		XCTExpectFailure(options: .with(descriptions: "[TestProtocol] Unexpected call: funcWhichThrowsWithArgAndReturnValue(value:) [Humans]"))
-
 		// when
-		XCTAssertThrowsError(try mock.funcWhichThrowsWithArgAndReturnValue(value: "Humans"))
+		do {
+			// expect two failures here:
+			// * XCTAssertEqual(...)
+			// * thrown error
+			_ = try XCTExpectFailure(
+				options: .with(descriptions: "XCTAssertEqual failed: (\"funcWhichThrowsWithArgAndReturnValue(Vogons)\") is not equal to (\"funcWhichThrowsWithArgAndReturnValue(Humans)\") - [TestProtocol]", "failed: caught error: \"vogons\"")) {
+					try mock.funcWhichThrowsWithArgAndReturnValue(value: "Humans")
+				}
+		} catch {
+			XCTAssertEqual(Error.vogons, error as? Error)
+		}
+
+		// then
+		XCTExpectFailure(
+			options: .with(descriptions: "XCTAssertEqual failed: (\"funcWhichThrowsWithArgAndReturnValue(Vogons)\") is not equal to (\"funcWhichThrowsWithArgAndReturnValue(Humans)\") - [TestProtocol]")) {
+				mock.verify()
+			}
 	}
 
 	func testAsyncFunction_argsDoNotMatch_neverReturnsValue_doesNotCrash() async {
@@ -598,7 +637,7 @@ final class BasicTests: XCTestCase {
 
 		Task {
 			// expect
-			XCTExpectFailure(options: .with(descriptions: "[TestProtocol] Unexpected call: asyncFuncWithArg(value:) [Humans]"))
+			XCTExpectFailure(options: .with(descriptions: "XCTAssertEqual failed: (\"asyncFuncWithArg(Vogons)\") is not equal to (\"asyncFuncWithArg(Humans)\") - [TestProtocol]"))
 
 			// when
 			_ = await mock.asyncFuncWithArg(value: "Humans")
@@ -615,7 +654,7 @@ final class BasicTests: XCTestCase {
 
 		// when
 		Task {
-			XCTExpectFailure(options: .with(descriptions: "[TestProtocol] Unexpected call: asyncThrowingFunc(value:) [Humans]"))
+			XCTExpectFailure(options: .with(descriptions: "XCTAssertEqual failed: (\"asyncThrowingFunc(Vogons)\") is not equal to (\"asyncThrowingFunc(Humans)\") - [TestProtocol]"))
 
 			_ = try await mock.asyncThrowingFunc(value: "Humans")
 		}
@@ -649,7 +688,7 @@ final class BasicTests: XCTestCase {
 
 		Task {
 			// expect
-			XCTExpectFailure(options: .with(descriptions: "[TestProtocol] Unexpected call: asyncThrowingFunc(value:) [Humans]"))
+			XCTExpectFailure(options: .with(descriptions: "XCTAssertEqual failed: (\"asyncThrowingFunc(Vogons)\") is not equal to (\"asyncThrowingFunc(Humans)\") - [TestProtocol]"))
 
 			// when
 			_ = try await mock.asyncThrowingFunc(value: "Humans")

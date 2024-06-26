@@ -9,22 +9,29 @@ import XCTest
 /// This identifies an expected call - the function name, and all important
 /// arguments.
 public struct CallSummary: Equatable, CustomStringConvertible {
-	/// Just the function name. This allows us to find an expectation where
+	/// Function signature. This allows us to find an expectation where
 	/// the function is correct, but the arguments do not match.
-	public let `func`: String
-	
+	public let functionSignature: String
+
+	/// Just the function name.
+	public let functionName: String
+
+	/// All the function arguments.
+	public var arguments: [String]
+
 	/// This is the complete expected call - function name and all important
 	/// arguments.
 	public var description: String
 
 	init(func: String, args: [Any?]) {
-		self.func = `func`
-
-		var description = "\(`func`)"
-		if args.count > 0 {
-			description += " " + Self.summary(for: args)
+		self.functionSignature = `func`
+		if let bracket = functionSignature.firstIndex(of: "(") {
+			self.functionName = functionSignature.prefix(upTo: bracket).description
+		} else {
+			self.functionName = functionSignature
 		}
-		self.description = description
+		self.arguments = args.map { Self.summary(for: $0 as Any) }
+		self.description = "\(functionName)(\(self.arguments.joined(separator: ",")))"
 	}
 
 	private static func summary(for argument: Any) -> String {
@@ -83,11 +90,19 @@ private enum ClaimState {
 	/// The expectation has been claimed.
 	case claimed(callSummary: CallSummary)
 
+	/// The expected function has a `callSummary` but called with incorrect
+	/// arguments.
+	case incorrectArgs(expected: CallSummary, actual: CallSummary)
+
 	func callSummary() -> CallSummary? {
 		switch self {
-		case .awaitingCallSummary, .awaitingAsyncCallSummary, .invalid:
+		case .awaitingCallSummary,
+				.awaitingAsyncCallSummary,
+				.invalid:
 			nil
-		case .unclaimed(let callSummary), .claimed(let callSummary):
+		case .unclaimed(let callSummary),
+				.claimed(let callSummary),
+				.incorrectArgs(let callSummary, _):
 			callSummary
 		}
 	}
@@ -100,7 +115,7 @@ private protocol AnyExpectation {
 	var actions: [([Any?]) -> Void] { get }
 
 	/// A value that should be returned from the mock function call.
-	var outcome: CallOutcome<Any, Error>? { get }
+	var result: CallOutcome<Any, Error>? { get }
 
 	/// The state of this expectation.
 	var state: ClaimState { get }
@@ -134,6 +149,11 @@ private protocol AnyExpectation {
 	/// mock.
 	/// - Returns: Bool indicating whether the expectation has been claimed.
 	func asyncClaim(_ callSummary: CallSummary) async -> Bool
+
+	/// Records that the expected function was called with incorrect arguments.
+	/// - Parameter callSummary: The incoming `callSummary` containing the
+	/// actual arguments that were received.
+	func setIncorrectArgs(_ callSummary: CallSummary)
 }
 
 /// This is the object passed back to the test, so the test can return a value
@@ -183,7 +203,11 @@ public enum CallOutcome<Success, Failure> where Failure : Error {
 
 	/// A failure, storing a `Failure` value.
 	case asyncFailure(AsyncFailureOutcome)
-	
+
+	/// Never returns an async value. Used when we get an unexpected async
+	/// call, and we cannot guess what value should be returned to the caller.
+	case asyncNever
+
 	/// Gets the return value for this call outcome, if any.
 	/// - Returns: return value, or nil if the outcome is intended to throw.
 	func value() -> Any? {
@@ -194,6 +218,8 @@ public enum CallOutcome<Success, Failure> where Failure : Error {
 			asyncSuccessOutcome.value
 		case .failure, .asyncFailure:
 			nil
+		case .asyncNever:
+			preconditionFailure("asyncNever never returns anything")
 		}
 	}
 	
@@ -210,6 +236,8 @@ public enum CallOutcome<Success, Failure> where Failure : Error {
 			throw error
 		case .asyncFailure(let asyncFailureOutcome):
 			throw asyncFailureOutcome.error
+		case .asyncNever:
+			preconditionFailure("asyncNever never returns anything")
 		}
 	}
 }
@@ -322,7 +350,7 @@ private class MockExpectation<M, R>: MockExpectationHandler, AnyExpectation {
 	fileprivate var actions = [([Any?]) -> Void]()
 
 	/// A value that should be returned from the mock function call.
-	fileprivate var outcome: CallOutcome<Any, Error>?
+	fileprivate var result: CallOutcome<Any, Error>?
 
 	/// The state of this expectation.
 	fileprivate var state: ClaimState = .invalid
@@ -351,28 +379,28 @@ private class MockExpectation<M, R>: MockExpectationHandler, AnyExpectation {
 	/// Adds a return value to the expectation.
 	/// - Parameter returnValue: value to return.
 	public func returning(_ returnValue: R) {
-		self.outcome = .success(returnValue)
+		self.result = .success(returnValue)
 	}
 
 	/// Adds an async return value to the expectation.
 	/// - Parameter returnValue: value to return asynchronously.
 	public func asyncReturning(_ returnValue: R) -> AsyncSuccessOutcome {
 		let outcome = AsyncSuccessOutcome(value: returnValue)
-		self.outcome = .asyncSuccess(outcome)
+		self.result = .asyncSuccess(outcome)
 		return outcome
 	}
 
 	/// Primes this mocked function to throw an error.
 	/// - Parameter error: error to throw.
 	public func throwing(_ error: Error) {
-		self.outcome = .failure(error)
+		self.result = .failure(error)
 	}
 
 	/// Primes this mocked function to asynchronously throw an error.
 	/// - Parameter error: error to throw asynchronously.
 	public func asyncThrowing(_ error: Error) -> AsyncFailureOutcome {
 		let outcome = AsyncFailureOutcome(error: error)
-		self.outcome = .asyncFailure(outcome)
+		self.result = .asyncFailure(outcome)
 		return outcome
 	}
 
@@ -393,20 +421,25 @@ private class MockExpectation<M, R>: MockExpectationHandler, AnyExpectation {
 	///   - file: Calling file.
 	///   - line: Calling line.
 	/// - Returns: Optional return value.
-	public func accept(_ callSummary: CallSummary, actionArgs: [Any?], file: StaticString, line: UInt) -> Any? {
+	fileprivate func accept(_ callSummary: CallSummary, actionArgs: [Any?], file: StaticString, line: UInt) -> Any? {
 		switch self.state {
 		case .awaitingCallSummary, .awaitingAsyncCallSummary:
 			self.state = .unclaimed(callSummary: callSummary)
 		case .invalid:
 			break
-		case .unclaimed:
-			XCTFail("[\(self.mockName)]: Too many expectations in `.expect { }`", file: file, line: line)
-			self.state = .invalid
-		case .claimed:
+		case let .unclaimed(existingCallSummary):
+			// Rare race-condition means that the callSummary is sometimes
+			// constructed twice... so only fail if the two summaries are
+			// different
+			if callSummary != existingCallSummary {
+				XCTFail("[\(self.mockName)]: Too many expectations in `.expect { }`", file: file, line: line)
+				self.state = .invalid
+			}
+		case .claimed, .incorrectArgs:
 			break
 		}
 
-		switch self.outcome {
+		switch self.result {
 		case nil:
 			return nil
 		case .success(let returnValue):
@@ -418,6 +451,8 @@ private class MockExpectation<M, R>: MockExpectationHandler, AnyExpectation {
 		case .failure, .asyncFailure:
 			XCTFail("[\(self.mockName)]: Non-throwing function cannot throw errors", file: file, line: line)
 			return nil
+		case .asyncNever:
+			preconditionFailure()
 		}
 	}
 
@@ -431,7 +466,7 @@ private class MockExpectation<M, R>: MockExpectationHandler, AnyExpectation {
 	///   - file: Calling file.
 	///   - line: Calling line.
 	/// - Returns: Optional return value.
-	public func asyncAccept(_ callSummary: CallSummary, actionArgs: [Any?], file: StaticString, line: UInt) async -> Any? {
+	fileprivate func asyncAccept(_ callSummary: CallSummary, actionArgs: [Any?], file: StaticString, line: UInt) async -> Any? {
 		return self.accept(callSummary, actionArgs: actionArgs, file: file, line: line)
 	}
 
@@ -445,20 +480,25 @@ private class MockExpectation<M, R>: MockExpectationHandler, AnyExpectation {
 	///   - file: Calling file.
 	///   - line: Calling line.
 	/// - Returns: Optional return value.
-	public func throwingAccept(_ callSummary: CallSummary, actionArgs: [Any?], file: StaticString, line: UInt) throws -> Any? {
+	fileprivate func throwingAccept(_ callSummary: CallSummary, actionArgs: [Any?], file: StaticString, line: UInt) throws -> Any? {
 		switch self.state {
 		case .awaitingCallSummary, .awaitingAsyncCallSummary:
 			self.state = .unclaimed(callSummary: callSummary)
 		case .invalid:
 			break
-		case .unclaimed:
-			XCTFail("[\(self.mockName)]: Too many expectations in `.expect { }`", file: file, line: line)
-			self.state = .invalid
-		case .claimed:
+		case let .unclaimed(existingCallSummary):
+			// Rare race-condition means that the callSummary is sometimes
+			// constructed twice... so only fail if the two summaries are
+			// different
+			if callSummary != existingCallSummary {
+				XCTFail("[\(self.mockName)]: Too many expectations in `.expect { }`", file: file, line: line)
+				self.state = .invalid
+			}
+		case .claimed, .incorrectArgs:
 			break
 		}
 
-		switch self.outcome {
+		switch self.result {
 		case nil:
 			return nil
 		case .success(let returnValue):
@@ -473,10 +513,12 @@ private class MockExpectation<M, R>: MockExpectationHandler, AnyExpectation {
 			// we're _setting_ the expectations, so should throw the error
 			// immediately
 			throw outcome.error
+		case .asyncNever:
+			preconditionFailure()
 		}
 	}
 
-	func asyncThrowingAccept(_ callSummary: CallSummary, actionArgs: [Any?], file: StaticString, line: UInt) async throws -> Any? {
+	fileprivate func asyncThrowingAccept(_ callSummary: CallSummary, actionArgs: [Any?], file: StaticString, line: UInt) async throws -> Any? {
 		return try throwingAccept(callSummary, actionArgs: actionArgs, file: file, line: line)
 	}
 
@@ -581,14 +623,28 @@ private class MockExpectation<M, R>: MockExpectationHandler, AnyExpectation {
 
 		return false
 	}
+
+	fileprivate func setIncorrectArgs(_ callSummary: CallSummary) {
+		// can only set incorrect args if this expectation is unclaimed
+		guard case ClaimState.unclaimed(let expectationCallSummary) = self.state else {
+			return
+		}
+
+		self.state = .incorrectArgs(expected: expectationCallSummary,
+									actual: callSummary)
+	}
 }
 
 extension MockExpectation: CustomDebugStringConvertible {
 	public var debugDescription: String {
 		switch self.state {
-		case .awaitingCallSummary, .awaitingAsyncCallSummary, .invalid:
+		case .awaitingCallSummary,
+				.awaitingAsyncCallSummary,
+				.invalid:
 			return "<unknown>"
-		case let .unclaimed(callSummary), let .claimed(callSummary):
+		case let .unclaimed(callSummary),
+			let .claimed(callSummary),
+			let .incorrectArgs(callSummary, _):
 			return String(describing: callSummary)
 		}
 	}
@@ -661,54 +717,82 @@ private class MockExpectationCreator<M> {
 	/// Used by the expectation consumer to claim an expectation.
 	/// - Parameter callSummary: Identifies the expecation being claimed.
 	/// - Returns: An expectation, or `nil` if the call was unexpected.
-	func claimExpectation(_ callSummary: CallSummary) -> AnyExpectation? {
+	func claimExpectation(_ callSummary: CallSummary) -> ClaimOutcome {
+		// Start by trying to find an exact match - correct function with
+		// correct arguments.
 		for expectation in expectations {
 			if expectation.claim(callSummary) {
-				return expectation
+				return .matched(expectation: expectation)
 			}
 		}
 
-		return nil
+		// Now try to find a close match - correct function with incorrect
+		// arguments.
+		if let expectation = self.bestGuessExpectation(callSummary),
+		   let expectedSummary = expectation.state.callSummary() {
+			return .incorrectArgs(expectation: expectation,
+								  expected: expectedSummary,
+								  actual: callSummary)
+		}
+
+		// Still nothing? This incoming call doesn't match any expectations.
+		return .unmatched
 	}
 
 	/// Used by the expectation consumer to claim an expectation.
 	/// - Parameter callSummary: Identifies the expecation being claimed.
 	/// - Returns: An expectation, or `nil` if the call was unexpected.
-	func asyncClaimExpectation(_ callSummary: CallSummary) async -> AnyExpectation? {
+	func asyncClaimExpectation(_ callSummary: CallSummary) async -> ClaimOutcome {
+		// Start by trying to find an exact match - correct function with
+		// correct arguments.
 		for expectation in expectations {
 			if await expectation.asyncClaim(callSummary) {
-				return expectation
+				return .matched(expectation: expectation)
 			}
 		}
 
-		return nil
-	}
-	
-	/// Tries to find the return value for an expectation whose function name
-	/// matches the given `callSummary`, ignoring the arguments.
-	/// - Parameter callSummary:
-	/// - Returns: The return value for any expectation for this mocked function.
-	func bestGuessValue(_ callSummary: CallSummary) -> Any? {
-		bestGuessExpectation(callSummary)?.outcome?.value()
-	}
-	
-	/// Returns the return value, or throws the error, for an expectation whose
-	/// function name matches the given `callSummary`, ignoring the arguments.
-	/// - Parameter callSummary:
-	/// - Returns: The return value for any expectation for this mocked function.
-	/// - Throws: The error for any expectation for this mocked function.
-	func bestGuessValueOrThrow(_ callSummary: CallSummary) throws -> Any? {
-		try bestGuessExpectation(callSummary)?.outcome?.valueOrThrow()
+		// Now try to find a close match - correct function with incorrect
+		// arguments.
+		if let expectation = self.bestGuessExpectation(callSummary),
+		   let expectedSummary = expectation.state.callSummary()  {
+			return .incorrectArgs(expectation: expectation,
+								  expected: expectedSummary,
+								  actual: callSummary)
+		}
+
+		// Still nothing? This incoming call doesn't match any expectations.
+		return .unmatched
 	}
 
-	/// Finds an expectation whose `func` matches the given `callSummary`,
-	/// ignoring arguments.
-	func bestGuessExpectation(_ callSummary: CallSummary) -> AnyExpectation? {
+	/// Finds an unclaimed expectation whose `func` matches the given
+	/// `callSummary`, ignoring arguments.
+	func bestGuessExpectation(_ actualSummary: CallSummary) -> AnyExpectation? {
 		expectations
 			.first(where: { expectation in
-				callSummary.func == expectation.state.callSummary()?.func
+				switch expectation.state {
+				case .awaitingCallSummary,
+						.awaitingAsyncCallSummary,
+						.invalid,
+						.claimed,
+						.incorrectArgs:
+					return false
+				case .unclaimed(let expectedCallSummary):
+					return expectedCallSummary.functionSignature == actualSummary.functionSignature
+				}
 			})
 	}
+}
+
+/// The outcome of trying to match an incoming call to an expectation.
+private enum ClaimOutcome {
+	/// The incoming call exactly matched an expectation.
+	case matched(expectation: AnyExpectation)
+
+	/// The incoming call matched the function, but not the expected arguments.
+	case incorrectArgs(expectation: AnyExpectation, expected: CallSummary, actual: CallSummary)
+
+	/// The incoming call did not match any expectation.
+	case unmatched
 }
 
 /// This is a call handler which consumes expectation. When the
@@ -717,83 +801,86 @@ private class MockExpectationCreator<M> {
 /// performs any actions associated with the expectation.
 private class MockExpectationConsumer<M>: MockExpectationHandler {
 	private let mockName: String
+	fileprivate var unexpectedCalls = [CallSummary]()
 	fileprivate let expectationCreator: MockExpectationCreator<M>
 
 	fileprivate init(mockName: String, expectationCreator: MockExpectationCreator<M>) {
 		self.mockName = mockName
 		self.expectationCreator = expectationCreator
 	}
-	
-	private func claim(_ callSummary: CallSummary, actionArgs: [Any?], file: StaticString, line: UInt) -> AnyExpectation? {
-		// try to find an expectation which matches the given `callSummary`
-		guard let foundExpectation = expectationCreator.claimExpectation(callSummary) else {
-			XCTFail("[\(self.mockName)] Unexpected call: \(callSummary)", file: file, line: line)
-			return nil
-		}
-
-		// perform actions for this expecatation
-		for action in foundExpectation.actions {
-			action(actionArgs)
-		}
-
-		return foundExpectation
-	}
-
-	private func asyncClaim(_ callSummary: CallSummary, actionArgs: [Any?], file: StaticString, line: UInt) async -> AnyExpectation? {
-		// try to find an expectation which matches the given `callSummary`
-		guard let foundExpectation = await expectationCreator.asyncClaimExpectation(callSummary) else {
-			XCTFail("[\(self.mockName)] Unexpected call: \(callSummary)", file: file, line: line)
-			return nil
-		}
-
-		// perform actions for this expecatation
-		for action in foundExpectation.actions {
-			action(actionArgs)
-		}
-
-		// this tells the XCTestExpectation that we have received the expected
-		// call. The `verify()` function may be waiting on this TestExpectation
-		// before it verifies the mock expectation.
-		foundExpectation.testExpectation?.fulfill()
-
-		return foundExpectation
-	}
 
 	func accept(_ callSummary: CallSummary, actionArgs: [Any?], file: StaticString, line: UInt) -> Any? {
-		// try to find the expectation, and peform actions
-		guard let foundExpectation = self.claim(callSummary, actionArgs: actionArgs, file: file, line: line) else {
-			return self.expectationCreator.bestGuessValue(callSummary)
+		// try to find an expectation which matches the given `callSummary`
+		let claimOutcome = expectationCreator.claimExpectation(callSummary)
+
+		let result: CallOutcome<Any, any Error>?
+
+		switch claimOutcome {
+		case let .matched(foundExpectation):
+			// perform actions for this expecatation
+			for action in foundExpectation.actions {
+				action(actionArgs)
+			}
+
+			result = foundExpectation.result
+		case let .incorrectArgs(closeMatchExpectation, expected, actual):
+			closeMatchExpectation.setIncorrectArgs(actual)
+			result = closeMatchExpectation.result
+			XCTAssertEqual(expected.description, actual.description, "[\(self.mockName)]", file: file, line: line)
+		case .unmatched:
+			result = nil
+			self.unexpectedCalls.append(callSummary)
+			XCTFail("[\(self.mockName)] Unexpected call: \(callSummary)", file: file, line: line)
 		}
 
 		// and return the return value to the caller
-		switch foundExpectation.outcome {
+		switch result {
 		case nil:
 			return nil
 		case .success(let returnValue):
 			return returnValue
 		case .asyncSuccess:
-			XCTFail("[\(self.mockName)]: Non-async function cannot return async values", file: file, line: line)
+			XCTFail("[\(self.mockName)]: Non-async function cannot return values asynchronously", file: file, line: line)
 			return nil
 		case .failure, .asyncFailure:
 			XCTFail("[\(self.mockName)]: Non-throwing function cannot throw errors", file: file, line: line)
 			return nil
+		case .asyncNever:
+			preconditionFailure()
 		}
 	}
 
 	func asyncAccept(_ callSummary: CallSummary, actionArgs: [Any?], file: StaticString, line: UInt) async -> Any? {
-		// try to claim the expectation, and perform actions.
-		// if we can't claim an expectation, then find an expectation whose
-		// function name matches the incoming call, so we can at least return
-		// a value or throw an error
-		guard let foundExpectation = await self.asyncClaim(callSummary, actionArgs: actionArgs, file: file, line: line) ??
-				self.expectationCreator.bestGuessExpectation(callSummary) else {
-			// this must be a completely unexpected function call, so the best
-			// we can do is return a continuation which will never complete
-			return await withCheckedContinuation { _ in }
+		// try to find an expectation which matches the given `callSummary`
+		let claimOutcome = await expectationCreator.asyncClaimExpectation(callSummary)
+
+		let result: CallOutcome<Any, any Error>?
+
+		switch claimOutcome {
+		case .matched(let foundExpectation):
+			// perform actions for this expecatation
+			for action in foundExpectation.actions {
+				action(actionArgs)
+			}
+
+			result = foundExpectation.result
+
+			// this tells the XCTestExpectation that we have received the expected
+			// call. The `verify()` function may be waiting on this TestExpectation
+			// before it verifies the mock expectation.
+			foundExpectation.testExpectation?.fulfill()
+		case let .incorrectArgs(closeMatchExpectation, expected, actual):
+			closeMatchExpectation.setIncorrectArgs(actual)
+			result = closeMatchExpectation.result
+			XCTAssertEqual(expected.description, actual.description, "[\(self.mockName)]", file: file, line: line)
+		case .unmatched:
+			result = .asyncNever
+			self.unexpectedCalls.append(callSummary)
+			XCTFail("[\(self.mockName)] Unexpected call: \(callSummary)", file: file, line: line)
 		}
 
 		// and return the return value to the caller
-		switch foundExpectation.outcome {
+		switch result {
 		case nil:
 			return nil
 		case .success(let returnValue):
@@ -805,17 +892,38 @@ private class MockExpectationConsumer<M>: MockExpectationHandler {
 		case .failure, .asyncFailure:
 			XCTFail("[\(self.mockName)]: Non-throwing function cannot throw errors", file: file, line: line)
 			return nil
+		case .asyncNever:
+			// this must be a completely unexpected function call, so the best
+			// we can do is return a continuation which will never complete
+			return await withCheckedContinuation { _ in }
 		}
 	}
 
 	func throwingAccept(_ callSummary: CallSummary, actionArgs: [Any?], file: StaticString, line: UInt) throws -> Any? {
-		// try to find the expectation, and peform actions
-		guard let foundExpectation = self.claim(callSummary, actionArgs: actionArgs, file: file, line: line) else {
-			return try self.expectationCreator.bestGuessValueOrThrow(callSummary)
+		// try to find an expectation which matches the given `callSummary`
+		let claimOutcome = expectationCreator.claimExpectation(callSummary)
+
+		let result: CallOutcome<Any, any Error>?
+
+		switch claimOutcome {
+		case let .matched(foundExpectation):
+			// perform actions for this expecatation
+			for action in foundExpectation.actions {
+				action(actionArgs)
+			}
+			result = foundExpectation.result
+		case let .incorrectArgs(closeMatchExpectation, expected, actual):
+			closeMatchExpectation.setIncorrectArgs(actual)
+			result = closeMatchExpectation.result
+			XCTAssertEqual(expected.description, actual.description, "[\(self.mockName)]", file: file, line: line)
+		case .unmatched:
+			result = nil
+			self.unexpectedCalls.append(callSummary)
+			XCTFail("[\(self.mockName)] Unexpected call: \(callSummary)", file: file, line: line)
 		}
 
 		// and return the return value to the caller
-		switch foundExpectation.outcome {
+		switch result {
 		case nil:
 			return nil
 		case .success(let returnValue):
@@ -828,23 +936,42 @@ private class MockExpectationConsumer<M>: MockExpectationHandler {
 		case .asyncFailure:
 			XCTFail("[\(self.mockName)]: Non-async function cannot asynchronously throw errors", file: file, line: line)
 			return nil
+		case .asyncNever:
+			preconditionFailure()
 		}
 	}
 
 	func asyncThrowingAccept(_ callSummary: CallSummary, actionArgs: [Any?], file: StaticString, line: UInt) async throws -> Any? {
-		// try to claim the expectation, and perform actions.
-		// if we can't claim an expectation, then find an expectation whose
-		// function name matches the incoming call, so we can at least return
-		// a value or throw an error
-		guard let foundExpectation = await self.asyncClaim(callSummary, actionArgs: actionArgs, file: file, line: line) ??
-				self.expectationCreator.bestGuessExpectation(callSummary) else {
-			// this must be a completely unexpected function call, so the best
-			// we can do is return a continuation which will never complete
-			return await withCheckedContinuation { _ in }
+		// try to find an expectation which matches the given `callSummary`
+		let claimOutcome = await expectationCreator.asyncClaimExpectation(callSummary)
+
+		let result: CallOutcome<Any, any Error>?
+
+		switch claimOutcome {
+		case .matched(let foundExpectation):
+			// perform actions for this expecatation
+			for action in foundExpectation.actions {
+				action(actionArgs)
+			}
+
+			result = foundExpectation.result
+
+			// this tells the XCTestExpectation that we have received the expected
+			// call. The `verify()` function may be waiting on this TestExpectation
+			// before it verifies the mock expectation.
+			foundExpectation.testExpectation?.fulfill()
+		case let .incorrectArgs(closeMatchExpectation, expected, actual):
+			closeMatchExpectation.setIncorrectArgs(actual)
+			result = closeMatchExpectation.result
+			XCTAssertEqual(expected.description, actual.description, "[\(self.mockName)]", file: file, line: line)
+		case .unmatched:
+			result = .asyncNever
+			self.unexpectedCalls.append(callSummary)
+			XCTFail("[\(self.mockName)] Unexpected call: \(callSummary)", file: file, line: line)
 		}
 
 		// and return the return value to the caller
-		switch foundExpectation.outcome {
+		switch result {
 		case nil:
 			return nil
 		case .success(let returnValue):
@@ -859,6 +986,10 @@ private class MockExpectationConsumer<M>: MockExpectationHandler {
 			try await withCheckedThrowingContinuation { continuation in
 				outcome.continuation = continuation
 			}
+		case .asyncNever:
+			// this must be a completely unexpected function call, so the best
+			// we can do is return a continuation which will never complete
+			return await withCheckedContinuation { _ in }
 		}
 	}
 }
@@ -872,7 +1003,7 @@ open class Mock<M> {
 	/// then a name of the mocked protocol (`M`) will be used.
 	/// - Parameter name: Mock name.
 	/// - Returns: A mock object for the `M` protocol.
-	public static func create(mockName name: String? = nil) -> Self {
+	public static func create(mockName name: String? = nil, file: StaticString = #file, line: UInt = #line) -> Self {
 		let mockName = name ?? String(describing: M.self)
 		let expectationCreator = MockExpectationCreator<M>(mockName: mockName)
 			let expectationConsumer = MockExpectationConsumer(mockName: mockName, expectationCreator: expectationCreator)
@@ -886,7 +1017,19 @@ open class Mock<M> {
 		self.name = name
 		self.expectationHandler = expectationHandler
 	}
-	
+
+	deinit {
+		if let expectationConsumer = self.expectationHandler as? MockExpectationConsumer<M> {
+			if !expectationConsumer.expectationCreator.expectations.isEmpty {
+				XCTFail("Mock \(self.name) deallocated with unsatisfied expectations. Call verify()")
+			}
+
+			if !expectationConsumer.unexpectedCalls.isEmpty {
+				XCTFail("Mock \(self.name) deallocated after receiving unexpected calls. Call verify()")
+			}
+		}
+	}
+
 	/// Creates an expectation for a function call.
 	/// - Parameter callBlock: A block containing the expected function call.
 	/// - Returns: An expectation which may contain a call outcome and actions.
@@ -925,25 +1068,9 @@ open class Mock<M> {
 		// make sure all the `callSummary` values are built
 		expectationCreator.makeCallSummaries()
 
-		let unclaimedExpectations = expectationCreator.expectations.filter {
-			switch $0.state {
-			case .invalid, .claimed:
-				return false
-			case .awaitingCallSummary, .awaitingAsyncCallSummary, .unclaimed:
-				return true
-			}
-		}
-		
-		if !unclaimedExpectations.isEmpty {
-			for unclaimedExpectation in unclaimedExpectations {
-				let expectationDescription = String(describing: unclaimedExpectation)
-				XCTFail("[\(self.name)] Unsatisfied expectation: \(expectationDescription)", file: file, line: line)
-			}
-		}
-		
-		// remove all expectations, so they don't fail again
-		// later in the test
-		expectationCreator.expectations.removeAll()
+		self.completeVerify(expectationCreator: expectationCreator,
+							expectationConsumer: expectationConsumer,
+							file: file, line: line)
 	}
 
 	/// Verifies that the expectated function calls have all been satisfied.
@@ -972,25 +1099,59 @@ open class Mock<M> {
 			}
 		}
 
-		let unclaimedExpectations = expectationCreator.expectations.filter {
-			switch $0.state {
+		self.completeVerify(expectationCreator: expectationCreator,
+							expectationConsumer: expectationConsumer,
+							file: file, line: line)
+	}
+
+	private func completeVerify(expectationCreator: MockExpectationCreator<M>,
+								expectationConsumer: MockExpectationConsumer<M>,
+								file: StaticString = #file, line: UInt = #line) {
+		for expectation in expectationCreator.expectations {
+			switch expectation.state {
 			case .invalid, .claimed:
-				return false
+				break
 			case .awaitingCallSummary, .awaitingAsyncCallSummary, .unclaimed:
-				return true
-			}
-		}
-
-		if !unclaimedExpectations.isEmpty {
-			for unclaimedExpectation in unclaimedExpectations {
-				let expectationDescription = String(describing: unclaimedExpectation)
+				let expectationDescription = String(describing: expectation)
 				XCTFail("[\(self.name)] Unsatisfied expectation: \(expectationDescription)", file: file, line: line)
+			case let .incorrectArgs(expected, actual):
+				XCTAssertEqual(expected.description, actual.description, "[\(self.name)]", file: file, line: line)
 			}
 		}
 
-		// remove all expectations, so they don't fail again
+		for unexpected in expectationConsumer.unexpectedCalls {
+			XCTFail("[\(self.name)] Unexpected call: \(unexpected)", file: file, line: line)
+		}
+
+		// remove all expectations and failures, so they don't fail again
 		// later in the test
 		expectationCreator.expectations.removeAll()
+		expectationConsumer.unexpectedCalls.removeAll()
+	}
+
+	/// A concrete mock object should call one of the `accept()` functions
+	/// whenever a call to a mocked function is made.
+	/// - Parameters:
+	///   - file: Calling file.
+	///   - line: Calling line.
+	///   - func: The name of the mocked function.
+	/// - Returns: The optional return value for the mocked function.
+	@discardableResult
+	public func accept(file: StaticString = #file, line: UInt = #line, func: String = #function) -> Any? {
+		return accept(func: `func`, checkArgs: [], actionArgs: [], file: file, line: line)
+	}
+
+	/// A concrete mock object should call one of the `accept()` functions
+	/// whenever a call to a mocked function is made.
+	/// - Parameters:
+	///   - file: Calling file.
+	///   - line: Calling line.
+	///   - func: The name of the mocked function.
+	///   - args: A collection of arguments that should be matched.
+	/// - Returns: The optional return value for the mocked function.
+	@discardableResult
+	public func accept(file: StaticString = #file, line: UInt = #line, func: String = #function, _ args: Any?...) -> Any? {
+		return accept(func: `func`, checkArgs: args, actionArgs: args, file: file, line: line)
 	}
 
 	/// A concrete mock object should call one of the `accept()` functions
@@ -1002,6 +1163,7 @@ open class Mock<M> {
 	///   - line: Calling line.
 	/// - Returns: The optional return value for the mocked function.
 	@discardableResult
+	@available(*, deprecated, renamed: "accept(func:_:)", message: "Use the varargs alternative instead")
 	public func accept(func: String = #function, args: [Any?] = [], file: StaticString = #file, line: UInt = #line) -> Any? {
 		return accept(func: `func`, checkArgs: args, actionArgs: args, file: file, line: line)
 	}
@@ -1022,6 +1184,31 @@ open class Mock<M> {
 		return expectationHandler.accept(callSummary, actionArgs: actionArgs, file: file, line: line)
 	}
 
+	/// A concrete mock object should call one of the `throwingAccept()` functions
+	/// whenever a call to a mocked throwing function is made.
+	/// - Parameters:
+	///   - file: Calling file.
+	///   - line: Calling line.
+	///   - func: The name of the mocked function.
+	/// - Returns: The optional return value for the mocked function.
+	@discardableResult
+	public func throwingAccept(file: StaticString = #file, line: UInt = #line, func: String = #function) throws -> Any? {
+		return try throwingAccept(func: `func`, checkArgs: [], actionArgs: [], file: file, line: line)
+	}
+
+	/// A concrete mock object should call one of the `throwingAccept()` functions
+	/// whenever a call to a mocked throwing function is made.
+	/// - Parameters:
+	///   - file: Calling file.
+	///   - line: Calling line.
+	///   - func: The name of the mocked function.
+	///   - args: A collection of arguments that should be matched.
+	/// - Returns: The optional return value for the mocked function.
+	@discardableResult
+	public func throwingAccept(file: StaticString = #file, line: UInt = #line, func: String = #function, _ args: Any?...) throws -> Any? {
+		return try throwingAccept(func: `func`, checkArgs: args, actionArgs: args, file: file, line: line)
+	}
+
 	/// A concrete mock object should call one of the `throwingAccept()`
 	/// functions whenever a call to a mocked throwing function is made.
 	/// - Parameters:
@@ -1031,6 +1218,7 @@ open class Mock<M> {
 	///   - line: Calling line.
 	/// - Returns: The optional return value for the mocked function.
 	@discardableResult
+	@available(*, deprecated, renamed: "throwingAccept(func:_:)", message: "Use the varargs alternative instead")
 	public func throwingAccept(func: String = #function, args: [Any?] = [], file: StaticString = #file, line: UInt = #line) throws -> Any? {
 		return try throwingAccept(func: `func`, checkArgs: args, actionArgs: args, file: file, line: line)
 	}
@@ -1055,12 +1243,38 @@ open class Mock<M> {
 	/// A concrete mock object should call one of the `accept()` functions
 	/// whenever a call to a mocked function is made.
 	/// - Parameters:
+	///   - file: Calling file.
+	///   - line: Calling line.
+	///   - func: The name of the mocked function.
+	/// - Returns: The optional return value for the mocked function.
+	@discardableResult
+	public func accept(file: StaticString = #file, line: UInt = #line, func: String = #function) async -> Any? {
+		return await accept(func: `func`, checkArgs: [], actionArgs: [], file: file, line: line)
+	}
+
+	/// A concrete mock object should call one of the `accept()` functions
+	/// whenever a call to a mocked function is made.
+	/// - Parameters:
+	///   - file: Calling file.
+	///   - line: Calling line.
+	///   - func: The name of the mocked function.
+	///   - args: A collection of arguments that should be matched.
+	/// - Returns: The optional return value for the mocked function.
+	@discardableResult
+	public func accept(file: StaticString = #file, line: UInt = #line, func: String = #function, _ args: Any?...) async -> Any? {
+		return await accept(func: `func`, checkArgs: args, actionArgs: args, file: file, line: line)
+	}
+
+	/// A concrete mock object should call one of the `accept()` functions
+	/// whenever a call to a mocked function is made.
+	/// - Parameters:
 	///   - func: The name of the mocked function.
 	///   - args: A collection of arguments that should be matched.
 	///   - file: Calling file.
 	///   - line: Calling line.
 	/// - Returns: The optional return value for the mocked function.
 	@discardableResult
+	@available(*, deprecated, renamed: "accept(func:_:)", message: "Use the varargs alternative instead")
 	public func accept(func: String = #function, args: [Any?] = [], file: StaticString = #file, line: UInt = #line) async -> Any? {
 		return await accept(func: `func`, checkArgs: args, actionArgs: args, file: file, line: line)
 	}
@@ -1081,6 +1295,31 @@ open class Mock<M> {
 		return await expectationHandler.asyncAccept(callSummary, actionArgs: actionArgs, file: file, line: line)
 	}
 
+	/// A concrete mock object should call one of the `throwingAccept()` functions
+	/// whenever a call to a mocked function is made.
+	/// - Parameters:
+	///   - file: Calling file.
+	///   - line: Calling line.
+	///   - func: The name of the mocked function.
+	/// - Returns: The optional return value for the mocked function.
+	@discardableResult
+	public func throwingAccept(file: StaticString = #file, line: UInt = #line, func: String = #function) async throws -> Any? {
+		return try await throwingAccept(func: `func`, checkArgs: [], actionArgs: [], file: file, line: line)
+	}
+
+	/// A concrete mock object should call one of the `throwingAccept()` functions
+	/// whenever a call to a mocked function is made.
+	/// - Parameters:
+	///   - file: Calling file.
+	///   - line: Calling line.
+	///   - func: The name of the mocked function.
+	///   - args: A collection of arguments that should be matched.
+	/// - Returns: The optional return value for the mocked function.
+	@discardableResult
+	public func throwingAccept(file: StaticString = #file, line: UInt = #line, func: String = #function, _ args: Any?...) async throws -> Any? {
+		return try await throwingAccept(func: `func`, checkArgs: args, actionArgs: args, file: file, line: line)
+	}
+
 	/// A concrete mock object should call one of the `throwingAccept()`
 	/// functions whenever a call to a mocked throwing function is made.
 	/// - Parameters:
@@ -1090,6 +1329,7 @@ open class Mock<M> {
 	///   - line: Calling line.
 	/// - Returns: The optional return value for the mocked function.
 	@discardableResult
+	@available(*, deprecated, renamed: "throwingAccept(func:_:)", message: "Use the varargs alternative instead")
 	public func throwingAccept(func: String = #function, args: [Any?] = [], file: StaticString = #file, line: UInt = #line) async throws -> Any? {
 		return try await throwingAccept(func: `func`, checkArgs: args, actionArgs: args, file: file, line: line)
 	}
