@@ -114,7 +114,7 @@ final class BasicTests: XCTestCase {
 
 	func testVerify_noExpectations_doesNotFail() {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 		
 		// when
 		mock.verify()
@@ -125,7 +125,7 @@ final class BasicTests: XCTestCase {
 	
 	func testExpectationSatisFied_doesNotFail() {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 		mock.expect { $0.voidFunc() }
 		mock.voidFunc()
 		
@@ -138,7 +138,7 @@ final class BasicTests: XCTestCase {
 	
 	func testUnexpectedCall_failsFast() {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 		
 		// expect
 		XCTExpectFailure(
@@ -156,7 +156,7 @@ final class BasicTests: XCTestCase {
 	
 	func testReturnValue() {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 		mock
 			.expect { $0.returnsOptionalString() }
 			.returning("fnord")
@@ -171,7 +171,7 @@ final class BasicTests: XCTestCase {
 
 	func testFuncWhichCanThrowButReturnsValue() throws {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 		mock
 			.expect { try $0.funcWhichThrows() }
 			.returning("fnord")
@@ -186,7 +186,7 @@ final class BasicTests: XCTestCase {
 
 	func testFuncWhichThrowsError() {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 		mock
 			.expect { try $0.funcWhichThrows() }
 			.throwing(Error.vogons)
@@ -198,7 +198,7 @@ final class BasicTests: XCTestCase {
 
 	func testMultipleExpectationsInExpectationBlock() {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 		mock.expect {
 			$0.voidFunc()
 			$0.funcWithOneArg(value: 42)
@@ -217,7 +217,7 @@ final class BasicTests: XCTestCase {
 	
 	func testVerifyButExpectationsNotSatisfied() {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 		mock.expect { $0.voidFunc() }
 		
 		// expect
@@ -230,7 +230,7 @@ final class BasicTests: XCTestCase {
 	
 	func testUnsatisfiedExpectation_verifyAgain_doesNotFail() {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 		mock.expect {
 			$0.voidFunc()
 		}
@@ -250,7 +250,7 @@ final class BasicTests: XCTestCase {
 	
 	func testExpectWithNoExpectation_doesNotCrash() {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 		mock.expect { _ in }
 		
 		// when
@@ -261,7 +261,7 @@ final class BasicTests: XCTestCase {
 	
 	func testExpectFuncWithOneArg_callSummaryCorrect() {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 		mock.expect { $0.funcWithOneArg(value: 42) }
 		
 		// expect
@@ -274,7 +274,7 @@ final class BasicTests: XCTestCase {
 	
 	func testExpectFuncWithOneOptionalArg_callSummaryCorrect() {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 		mock.expect { $0.funcWithOneOptionalArg(value: nil) }
 		
 		// expect
@@ -287,7 +287,7 @@ final class BasicTests: XCTestCase {
 	
 	func testExpectFuncWithTwoArgs_callSummaryCorrect() {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 		mock.expect { $0.funcWithTwoArgs(value1: 42, value2: "meaning of life") }
 		
 		// expect
@@ -300,7 +300,7 @@ final class BasicTests: XCTestCase {
 	
 	func testExpectFuncWithArrayOfDictArgument_callSummaryCorrect() {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 		mock.expect { $0.funcWithArrayOfDicts(values: [
 			[
 				"one": 1,
@@ -324,7 +324,7 @@ final class BasicTests: XCTestCase {
 	
 	func testActionArgsNotChecked() {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 		
 		var capturedInt: Int?
 		var capturedString: String?
@@ -347,7 +347,7 @@ final class BasicTests: XCTestCase {
 	
 	func testArgsAreCheckedAndPassedToActions() {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 		
 		var capturedInt: Int?
 		var capturedString: String?
@@ -370,7 +370,7 @@ final class BasicTests: XCTestCase {
 	
 	func testDoingAndReturn() {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 		var capturedString: String?
 		
 		mock
@@ -393,7 +393,7 @@ final class BasicTests: XCTestCase {
 	
 	func testFuncExpectedTwice_performedOnce_fails() {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 		mock.expect { $0.voidFunc() }
 		mock.expect { $0.voidFunc() }
 		mock.voidFunc()
@@ -408,7 +408,7 @@ final class BasicTests: XCTestCase {
 	
 	func testFuncExpectedTwice_performedThreeTimes_fails() {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 		mock.expect { $0.voidFunc() }
 		mock.expect { $0.voidFunc() }
 		mock.voidFunc()
@@ -427,7 +427,7 @@ final class BasicTests: XCTestCase {
 	
 	func testFuncExpectedTwice_performedTwice_pass() {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 		mock.expect { $0.voidFunc() }
 		mock.expect { $0.voidFunc() }
 		
@@ -443,7 +443,7 @@ final class BasicTests: XCTestCase {
 
 	func testAsyncVoidFunc_pass() async {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 		mock.expect { await $0.asyncVoidFunc() }
 
 		// when
@@ -455,7 +455,7 @@ final class BasicTests: XCTestCase {
 
 	func testAsyncVoidFunc_notCalled_verify_fail() async {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 		mock.expect { await $0.asyncVoidFunc() }
 
 		// when
@@ -468,7 +468,7 @@ final class BasicTests: XCTestCase {
 
 	func testAsyncVoidFunc_unexpectedCall_fail() async {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 
 		Task {
 			// when
@@ -481,7 +481,7 @@ final class BasicTests: XCTestCase {
 		// test that we can set expectations on an async function being called
 
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 		let future = mock.expect { await $0.asyncFuncReturnsString() }
 			.asyncReturning("Beeblebrox")
 
@@ -508,7 +508,7 @@ final class BasicTests: XCTestCase {
 		var capturedInt: Int?
 		var capturedString: String?
 
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 		mock.expect { await $0.asyncFuncWithActionArgs(value1: 1, value2: "hi") }
 			.doing { actionArgs in
 				capturedInt = actionArgs[0] as? Int
@@ -529,7 +529,7 @@ final class BasicTests: XCTestCase {
 		// test that we can set expectations on an async function being called
 
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 		let future = mock.expect { try await $0.asyncThrowingFunc(value: "Zaphod") }
 			.asyncThrowing(Error.vogons)
 
@@ -557,7 +557,7 @@ final class BasicTests: XCTestCase {
 
 	func testArgsDoNotMatch_returnBestGuessValue_doesNotCrash() {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 
 		mock
 			.expect { $0.funcWithArgAndReturnValue(value: "Vogons") }
@@ -579,7 +579,7 @@ final class BasicTests: XCTestCase {
 
 	func testThrowingFunction_argsDoNotMatch_returnBestGuessValue_doesNotCrash() throws {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 
 		mock
 			.expect { try $0.funcWhichThrowsWithArgAndReturnValue(value: "Vogons") }
@@ -601,7 +601,7 @@ final class BasicTests: XCTestCase {
 
 	func testThrowingFunction_argsDoNotMatch_throwsBestGuessError_doesNotCrash() {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 
 		mock
 			.expect { try $0.funcWhichThrowsWithArgAndReturnValue(value: "Vogons") }
@@ -629,7 +629,7 @@ final class BasicTests: XCTestCase {
 
 	func testAsyncFunction_argsDoNotMatch_neverReturnsValue_doesNotCrash() async {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 
 		_ = mock
 			.expect { await $0.asyncFuncWithArg(value: "Vogons") }
@@ -646,7 +646,7 @@ final class BasicTests: XCTestCase {
 
 	func testAsyncThrowingFunction_argsDoNotMatch_neverReturnsValue_doesNotCrash() async throws {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 
 		_ = mock
 			.expect { try await $0.asyncThrowingFunc(value: "Vogons") }
@@ -662,7 +662,7 @@ final class BasicTests: XCTestCase {
 
 	func testAsyncThrowingFunction_funcDoesNotMatch_doesNotCrash() async throws {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 
 		_ = mock
 			.expect { try await $0.asyncThrowingFunc(value: "Vogons") }
@@ -680,7 +680,7 @@ final class BasicTests: XCTestCase {
 
 	func testAsyncThrowingFunction_argsDoNotMatch_neverThrowsError_doesNotCrash() async throws {
 		// given
-		let mock = TestMock.create()
+		let mock = TestMock.make()
 
 		_ = mock
 			.expect { try await $0.asyncThrowingFunc(value: "Vogons") }

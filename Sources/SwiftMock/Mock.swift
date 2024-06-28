@@ -1003,7 +1003,7 @@ open class Mock<M> {
 	/// then a name of the mocked protocol (`M`) will be used.
 	/// - Parameter name: Mock name.
 	/// - Returns: A mock object for the `M` protocol.
-	public static func create(mockName name: String? = nil, file: StaticString = #file, line: UInt = #line) -> Self {
+	public static func make(mockName name: String? = nil, file: StaticString = #file, line: UInt = #line) -> Self {
 		let mockName = name ?? String(describing: M.self)
 		let expectationCreator = MockExpectationCreator<M>(mockName: mockName)
 			let expectationConsumer = MockExpectationConsumer(mockName: mockName, expectationCreator: expectationCreator)
@@ -1013,6 +1013,15 @@ open class Mock<M> {
 		return consumerMock
 	}
 	
+	/// Creates a mock object with the given name. If `name` is not provided,
+	/// then a name of the mocked protocol (`M`) will be used.
+	/// - Parameter name: Mock name.
+	/// - Returns: A mock object for the `M` protocol.
+	@available(*, deprecated, renamed: "make(mockName:file:line:)")
+	public static func create(mockName name: String? = nil, file: StaticString = #file, line: UInt = #line) -> Self {
+		Self.make(mockName: name, file: file, line: line)
+	}
+
 	public required init(name: String, expectationHandler: MockExpectationHandler) {
 		self.name = name
 		self.expectationHandler = expectationHandler
