@@ -263,13 +263,13 @@ public class MockSyncExpectation<M, R> {
 
 	/// Adds a return value to the expectation.
 	/// - Parameter returnValue: value to return.
-	func returning(_ returnValue: R) {
+	public func returning(_ returnValue: R) {
 		self.expectation.returning(returnValue)
 	}
 
 	/// Primes this mocked function to throw an error.
 	/// - Parameter error: error to throw.
-	func throwing(_ error: Error) {
+	public func throwing(_ error: Error) {
 		self.expectation.throwing(error)
 	}
 
@@ -277,7 +277,7 @@ public class MockSyncExpectation<M, R> {
 	/// made.
 	/// - Parameter block: action block
 	@discardableResult
-	func doing(_ block: @escaping ([Any?]) -> Void) -> Self {
+	public func doing(_ block: @escaping ([Any?]) -> Void) -> Self {
 		self.expectation.doing(block)
 		return self
 	}
@@ -304,13 +304,13 @@ public class MockAsyncExpectation<M, R> {
 
 	/// Adds an async return value to the expectation.
 	/// - Parameter returnValue: value to return asynchronously.
-	func asyncReturning(_ returnValue: R) -> AsyncSuccessOutcome {
+	public func asyncReturning(_ returnValue: R) -> AsyncSuccessOutcome {
 		self.expectation.asyncReturning(returnValue)
 	}
 
 	/// Primes this mocked function to asynchronously throw an error.
 	/// - Parameter error: error to throw asynchronously.
-	func asyncThrowing(_ error: Error) -> AsyncFailureOutcome {
+	public func asyncThrowing(_ error: Error) -> AsyncFailureOutcome {
 		self.expectation.asyncThrowing(error)
 	}
 
@@ -318,7 +318,7 @@ public class MockAsyncExpectation<M, R> {
 	/// made.
 	/// - Parameter block: action block
 	@discardableResult
-	func doing(_ block: @escaping ([Any?]) -> Void) -> Self {
+	public func doing(_ block: @escaping ([Any?]) -> Void) -> Self {
 		self.expectation.doing(block)
 		return self
 	}
