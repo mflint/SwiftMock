@@ -106,6 +106,19 @@ private enum ClaimState {
 			callSummary
 		}
 	}
+
+	func isAwaiting() -> Bool {
+		switch self {
+		case .awaitingCallSummary,
+				.awaitingAsyncCallSummary:
+			true
+		case .invalid,
+				.unclaimed,
+				.claimed,
+				.incorrectArgs:
+			false
+		}
+	}
 }
 
 /// A protocol for expectations which erases the generic types so we can
@@ -156,9 +169,15 @@ private protocol AnyExpectation {
 	func setIncorrectArgs(_ callSummary: CallSummary)
 }
 
+public protocol AsyncFuture {
+	/// Call this `fulfill()` function to return the async value or throw
+	/// an `Error` from the mock.
+	func fulfill()
+}
+
 /// This is the object passed back to the test, so the test can return a value
 /// from the mocked async function.
-public class AsyncSuccessOutcome {
+public class AsyncSuccessOutcome: AsyncFuture {
 	fileprivate let value: Any
 	var continuation: CheckedContinuation<Any, Never>?
 
@@ -175,7 +194,7 @@ public class AsyncSuccessOutcome {
 
 /// This object is passed back to the unit test, so the test can throw an
 /// Error from the mocked async function.
-public class AsyncFailureOutcome {
+public class AsyncFailureOutcome: AsyncFuture {
 	fileprivate let error: Error
 	var continuation: CheckedContinuation<Never, Error>?
 
@@ -191,7 +210,7 @@ public class AsyncFailureOutcome {
 }
 
 /// `CallOutcome` is the result of a mocked function.
-public enum CallOutcome<Success, Failure> where Failure : Error {
+private enum CallOutcome<Success, Failure> where Failure : Error {
 	/// A success, storing a `Success` value.
 	case success(Success)
 
@@ -273,6 +292,17 @@ public class MockSyncExpectation<M, R> {
 		self.expectation.throwing(error)
 	}
 
+	/// Primes this mocked function to return this result.
+	/// - Parameter result: result to return (either a success value or an Error)
+	public func result(_ result: Result<R, Error>) {
+		switch result {
+		case let .success(value):
+			self.returning(value)
+		case let .failure(error):
+			self.throwing(error)
+		}
+	}
+
 	/// Adds a closure action which will be performed if the expected call is
 	/// made.
 	/// - Parameter block: action block
@@ -304,14 +334,25 @@ public class MockAsyncExpectation<M, R> {
 
 	/// Adds an async return value to the expectation.
 	/// - Parameter returnValue: value to return asynchronously.
-	public func asyncReturning(_ returnValue: R) -> AsyncSuccessOutcome {
+	public func asyncReturning(_ returnValue: R) -> AsyncFuture {
 		self.expectation.asyncReturning(returnValue)
 	}
 
 	/// Primes this mocked function to asynchronously throw an error.
 	/// - Parameter error: error to throw asynchronously.
-	public func asyncThrowing(_ error: Error) -> AsyncFailureOutcome {
+	public func asyncThrowing(_ error: Error) -> AsyncFuture {
 		self.expectation.asyncThrowing(error)
+	}
+	
+	/// Primes this mocked function to asynchronously return this result.
+	/// - Parameter result: result to return (either a success value or an Error)
+	public func asyncResult(_ result: Result<R, Error>) -> AsyncFuture {
+		switch result {
+		case let .success(value):
+			self.asyncReturning(value)
+		case let .failure(error):
+			self.asyncThrowing(error)
+		}
 	}
 
 	/// Adds a closure action which will be performed if the expected call is
@@ -1076,6 +1117,13 @@ open class Mock<M> {
 		
 		// make sure all the `callSummary` values are built
 		expectationCreator.makeCallSummaries()
+
+		// check for async call summaries - we can't make them, but we can
+		// advise to call the async `verify` function
+		guard expectationCreator.expectations.count(where: { $0.state.isAwaiting() }) == 0 else {
+			XCTFail("Call `await verify()`")
+			return
+		}
 
 		self.completeVerify(expectationCreator: expectationCreator,
 							expectationConsumer: expectationConsumer,
