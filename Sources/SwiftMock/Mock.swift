@@ -1120,7 +1120,7 @@ open class Mock<M> {
 
 		// check for async call summaries - we can't make them, but we can
 		// advise to call the async `verify` function
-		guard expectationCreator.expectations.count(where: { $0.state.isAwaiting() }) == 0 else {
+		guard !expectationCreator.expectations.contains(where: { $0.state.isAwaiting() }) else {
 			XCTFail("Call `await verify()`")
 			return
 		}
