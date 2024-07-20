@@ -78,11 +78,11 @@ class MockFrood: Mock<Frood>, Frood {
 }
 ```
 
-Then create the mock in your test class, using `MockFrood.create()`. You may pass in a name for this mock, if you don't like the default name. A test class would typically look something like this:
+Then create the mock in your test class, using `MockFrood.make()`. You may pass in a name for this mock, if you don't like the default name. A test class would typically look something like this:
 
 ```swift
 class MyTests: XCTestCase {
-    private let mockFrood = MockFrood.create()
+    private let mockFrood = MockFrood.make()
 
     private func verify(file: StaticString = #file,
                         line: UInt = #line) {
@@ -346,7 +346,7 @@ class MockObject: Mock<ProtocolWithProperty>, ProtocolWithProperty {
 // usage in the test class
 
 class ExampleTests: XCTestCase {
-    let mock = MockObject.create()
+    let mock = MockObject.make()
 
     func test_withProperty() {
         // expect
