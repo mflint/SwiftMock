@@ -237,7 +237,7 @@ future.fulfill()
 
 Mocks are strict. This means they will reject _any_ unexpected call. If this annoys you, then perhaps you should be stubbing those calls instead of mocking?
 
-When testing async functions, the mock uses an internal `XCTestExpectation` to (hopefully!) ensure that the mock won't be verified until the expected async call completes.
+The mock uses an internal `XCTestExpectation` to (hopefully!) ensure that the mock won't be verified until the expected call completes. This applies to all mocked functions, even for tests in a completely synchronous environment, because the system-under-test may internally call the mocked function from a `Task`. This means that you shouldn't need to explicitly write semaphores in your unit-test code. 
 
 
 ## Various ways to call the `accept` or `throwingAccept` function when writing your Mock object

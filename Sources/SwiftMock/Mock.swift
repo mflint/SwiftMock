@@ -133,9 +133,9 @@ private protocol AnyExpectation {
 	/// The state of this expectation.
 	var state: ClaimState { get }
 
-	/// For async functions, we use this XCTestExpectation to give time for
+	/// We use this XCTestExpectation to give time for
 	/// mock expectation to be fulfilled before verifying.
-	var testExpectation: XCTestExpectation? { get }
+	var testExpectation: XCTestExpectation { get }
 
 	/// This function makes the `callSummary` string, by calling the captured
 	/// `callBlock`. The `callSummary` is used for matching expected calls
@@ -396,9 +396,9 @@ private class MockExpectation<M, R>: MockExpectationHandler, AnyExpectation {
 	/// The state of this expectation.
 	fileprivate var state: ClaimState = .invalid
 
-	/// For async functions, we use this XCTestExpectation to give time for
+	/// We use this XCTestExpectation to give time for
 	/// mock expectation to be fulfilled before verifying.
-	fileprivate var testExpectation: XCTestExpectation?
+	fileprivate var testExpectation: XCTestExpectation
 
 	init(mockName: String, callBlock: @escaping (M) throws -> R, mockInit: @escaping (String, MockExpectationHandler) -> Mock<M>) {
 		self.mockName = mockName
@@ -406,6 +406,7 @@ private class MockExpectation<M, R>: MockExpectationHandler, AnyExpectation {
 		self.asyncCallBlock = nil
 		self.state = .awaitingCallSummary
 		self.mockInit = mockInit
+		self.testExpectation = XCTestExpectation()
 	}
 
 	init(mockName: String, callBlock: @escaping (M) async throws -> R, mockInit: @escaping (String, MockExpectationHandler) -> Mock<M>) {
@@ -472,6 +473,8 @@ private class MockExpectation<M, R>: MockExpectationHandler, AnyExpectation {
 			// Rare race-condition means that the callSummary is sometimes
 			// constructed twice... so only fail if the two summaries are
 			// different
+
+			// TODO: this occasionally crashes, with the `existingCallSummary` value apparently unintialised. Why?
 			if callSummary != existingCallSummary {
 				XCTFail("[\(self.mockName)]: Too many expectations in `.expect { }`", file: file, line: line)
 				self.state = .invalid
@@ -864,6 +867,11 @@ private class MockExpectationConsumer<M>: MockExpectationHandler {
 			}
 
 			result = foundExpectation.result
+
+			// this tells the XCTestExpectation that we have received the expected
+			// call. The `verify()` function may be waiting on this TestExpectation
+			// before it verifies the mock expectation.
+			foundExpectation.testExpectation.fulfill()
 		case let .incorrectArgs(closeMatchExpectation, expected, actual):
 			closeMatchExpectation.setIncorrectArgs(actual)
 			result = closeMatchExpectation.result
@@ -909,7 +917,7 @@ private class MockExpectationConsumer<M>: MockExpectationHandler {
 			// this tells the XCTestExpectation that we have received the expected
 			// call. The `verify()` function may be waiting on this TestExpectation
 			// before it verifies the mock expectation.
-			foundExpectation.testExpectation?.fulfill()
+			foundExpectation.testExpectation.fulfill()
 		case let .incorrectArgs(closeMatchExpectation, expected, actual):
 			closeMatchExpectation.setIncorrectArgs(actual)
 			result = closeMatchExpectation.result
@@ -952,7 +960,13 @@ private class MockExpectationConsumer<M>: MockExpectationHandler {
 			for action in foundExpectation.actions {
 				action(actionArgs)
 			}
+
 			result = foundExpectation.result
+
+			// this tells the XCTestExpectation that we have received the expected
+			// call. The `verify()` function may be waiting on this TestExpectation
+			// before it verifies the mock expectation.
+			foundExpectation.testExpectation.fulfill()
 		case let .incorrectArgs(closeMatchExpectation, expected, actual):
 			closeMatchExpectation.setIncorrectArgs(actual)
 			result = closeMatchExpectation.result
@@ -1000,7 +1014,7 @@ private class MockExpectationConsumer<M>: MockExpectationHandler {
 			// this tells the XCTestExpectation that we have received the expected
 			// call. The `verify()` function may be waiting on this TestExpectation
 			// before it verifies the mock expectation.
-			foundExpectation.testExpectation?.fulfill()
+			foundExpectation.testExpectation.fulfill()
 		case let .incorrectArgs(closeMatchExpectation, expected, actual):
 			closeMatchExpectation.setIncorrectArgs(actual)
 			result = closeMatchExpectation.result
@@ -1121,7 +1135,7 @@ open class Mock<M> {
 		// check for async call summaries - we can't make them, but we can
 		// advise to call the async `verify` function
 		guard !expectationCreator.expectations.contains(where: { $0.state.isAwaiting() }) else {
-			XCTFail("Call `await verify()`")
+			XCTFail("Mock has async expectations - call `await verify()`")
 			return
 		}
 
@@ -1145,17 +1159,6 @@ open class Mock<M> {
 		expectationCreator.makeCallSummaries()
 		await expectationCreator.asyncMakeCallSummaries()
 
-		// wait for the XCTestExpectation for every async call to be fulfilled,
-		// before we verify the expectations
-		for expectation in expectationCreator.expectations {
-			if let testExpectation = expectation.testExpectation {
-				// run this in a synchronous context
-				{
-					_ = XCTWaiter().wait(for: [testExpectation], timeout: 0.5)
-				}()
-			}
-		}
-
 		self.completeVerify(expectationCreator: expectationCreator,
 							expectationConsumer: expectationConsumer,
 							file: file, line: line)
@@ -1164,6 +1167,12 @@ open class Mock<M> {
 	private func completeVerify(expectationCreator: MockExpectationCreator<M>,
 								expectationConsumer: MockExpectationConsumer<M>,
 								file: StaticString = #file, line: UInt = #line) {
+		// wait for the XCTestExpectation for every call to be fulfilled,
+		// before we verify the expectations
+		for expectation in expectationCreator.expectations {
+			_ = XCTWaiter().wait(for: [expectation.testExpectation], timeout: 1)
+		}
+
 		for expectation in expectationCreator.expectations {
 			switch expectation.state {
 			case .invalid, .claimed:

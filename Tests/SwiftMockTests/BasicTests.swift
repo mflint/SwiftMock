@@ -695,6 +695,27 @@ final class BasicTests: XCTestCase {
 			XCTFail("expected error")
 		}
 	}
+
+	func testSynchronousCallCallsMockAsynchronously_usesXCTestExpectation() throws {
+		// given
+		let mock = TestMock.make()
+
+		// expect
+		// * we expect a non-async function call
+		mock.expect { $0.voidFunc() }
+
+		// when
+		Task {
+			mock.voidFunc()
+		}
+
+		// then
+		// * call the non-async verify
+		// * _sometimes_ this would fail because verify is performed before the
+		//   Task completes... but the internal XCTestExpectation should act
+		//   as a semaphore, giving the Task extra time to complete
+		mock.verify()
+	}
 }
 
 extension XCTExpectedFailure.Options {
