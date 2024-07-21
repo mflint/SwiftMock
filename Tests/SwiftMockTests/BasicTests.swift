@@ -477,7 +477,7 @@ final class BasicTests: XCTestCase {
 		}
 	}
 
-	func testAsyncReturnsInt() async {
+	func testAsyncReturnsString() async {
 		// test that we can set expectations on an async function being called
 
 		// given

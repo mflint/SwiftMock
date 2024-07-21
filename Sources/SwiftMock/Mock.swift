@@ -365,6 +365,10 @@ public class MockAsyncExpectation<M, R> {
 	}
 }
 
+private struct MockExpectationQueue {
+	static let dispatchQueue = DispatchQueue(label: "MockExpectation.queue", attributes: .concurrent)
+}
+
 /// A single expectated call on a mock; created when a test calls
 /// `mock.expect`.
 private class MockExpectation<M, R>: MockExpectationHandler, AnyExpectation {
@@ -394,28 +398,38 @@ private class MockExpectation<M, R>: MockExpectationHandler, AnyExpectation {
 	fileprivate var result: CallOutcome<Any, Error>?
 
 	/// The state of this expectation.
-	fileprivate var state: ClaimState = .invalid
+	private var theState: ClaimState = .invalid
+	fileprivate var state: ClaimState {
+		get {
+			MockExpectationQueue.dispatchQueue.sync {
+				return self.theState
+			}
+		}
+		set {
+			MockExpectationQueue.dispatchQueue.sync(flags: .barrier) {
+				self.theState = newValue
+			}
+		}
+	}
 
 	/// We use this XCTestExpectation to give time for
 	/// mock expectation to be fulfilled before verifying.
-	fileprivate var testExpectation: XCTestExpectation
+	fileprivate let testExpectation = XCTestExpectation(description: UUID().uuidString)
 
 	init(mockName: String, callBlock: @escaping (M) throws -> R, mockInit: @escaping (String, MockExpectationHandler) -> Mock<M>) {
 		self.mockName = mockName
 		self.callBlock = callBlock
 		self.asyncCallBlock = nil
-		self.state = .awaitingCallSummary
+		self.theState = .awaitingCallSummary
 		self.mockInit = mockInit
-		self.testExpectation = XCTestExpectation()
 	}
 
 	init(mockName: String, callBlock: @escaping (M) async throws -> R, mockInit: @escaping (String, MockExpectationHandler) -> Mock<M>) {
 		self.mockName = mockName
 		self.callBlock = nil
 		self.asyncCallBlock = callBlock
-		self.state = .awaitingAsyncCallSummary
+		self.theState = .awaitingAsyncCallSummary
 		self.mockInit = mockInit
-		self.testExpectation = XCTestExpectation()
 	}
 
 	/// Adds a return value to the expectation.
