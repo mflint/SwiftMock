@@ -19,6 +19,16 @@ _SwiftMock_ is a mocking framework for Swift 5.9.
 
 I spent a while using fakes (test-doubles which implement a prototol and simply set various `methodWasCalled` flags), but this doesn't scale well. It's easy to forget to make assertions, especially if a new function is added to a protocol long after the protocol's fake was written. I've since migrated a lot of code to using this new Mock, and it's _amazing_ how many defects I've found. Mocks FTW!
 
+### Moving to Codeberg
+
+This repo is moving to https://codeberg.org/mflint/SwiftMock
+
+While using the version in GitHub or GitLab, you'll see a warning in your console about the new git location.
+
+To suppress this warning, either update your remote to [the Codeberg repo](https://codeberg.org/mflint/SwiftMock), or make an extension on the `Mock` class which calls the `moveWarning` parameter as `false`.
+
+There will be no more updates pushed to the GitHub or GitLab repos.
+
 ## Versioning
 
 _SwiftMock_ versions track the major/minor version of Swift itself, so you can easily find a tag for a version of SwiftMock which works with your version of Swift.

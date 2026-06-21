@@ -1072,7 +1072,11 @@ open class Mock<M> {
 	/// then a name of the mocked protocol (`M`) will be used.
 	/// - Parameter name: Mock name.
 	/// - Returns: A mock object for the `M` protocol.
-	public static func make(mockName name: String? = nil, file: StaticString = #file, line: UInt = #line) -> Self {
+	public static func make(mockName name: String? = nil, file: StaticString = #file, line: UInt = #line, moveWarning: Bool = true) -> Self {
+		if moveWarning {
+			print("Warning: update your git remote to https://codeberg.org/mflint/SwiftMock")
+		}
+
 		let mockName = name ?? String(describing: M.self)
 		let expectationCreator = MockExpectationCreator<M>(mockName: mockName)
 			let expectationConsumer = MockExpectationConsumer(mockName: mockName, expectationCreator: expectationCreator)
@@ -1086,9 +1090,9 @@ open class Mock<M> {
 	/// then a name of the mocked protocol (`M`) will be used.
 	/// - Parameter name: Mock name.
 	/// - Returns: A mock object for the `M` protocol.
-	@available(*, deprecated, renamed: "make(mockName:file:line:)")
+	@available(*, deprecated, renamed: "make()")
 	public static func create(mockName name: String? = nil, file: StaticString = #file, line: UInt = #line) -> Self {
-		Self.make(mockName: name, file: file, line: line)
+		Self.make(mockName: name, file: file, line: line, moveWarning: true)
 	}
 
 	public required init(name: String, expectationHandler: MockExpectationHandler) {
